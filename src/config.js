@@ -8,7 +8,8 @@ export const config = {
   // VIP users - free unlimited access
   // Add Telegram user IDs OR usernames (without @)
   VIP_USERS: [
-    
+    42656267,
+    "Sabama98", 
   ],
   
   // USDT TRC20 settings
