@@ -1,161 +1,195 @@
 import express from "express";
-import axios from "axios";
-import fs from "fs";
-import FormData from "form-data";
 import dotenv from "dotenv";
-
 dotenv.config();
+
+import { config } from "./src/config.js";
+import { getUser, addMessages, useMessage, canUseBot, isVIP } from "./src/database.js";
+import { checkPayment } from "./src/payment.js";
+import { formatText } from "./src/formatter.js";
+import { sendMessage, downloadVoice, transcribeAudio } from "./src/telegram.js";
 
 const app = express();
 app.use(express.json());
-
-const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
-const OPENAI_KEY = process.env.OPENAI_KEY;
 
 // Health check
 app.get("/", (req, res) => {
   res.send("Bot is running!");
 });
 
-// Format text using GPT-4o-mini
-async function formatText(rawText) {
-  const response = await axios.post(
-    "https://api.openai.com/v1/chat/completions",
-    {
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `You are a text formatter. Your ONLY job is to restructure spoken text into clean formatted text.
+// Handle commands
+async function handleCommand(chatId, text, userId, username) {
+  const user = getUser(chatId);
+  const command = text.toLowerCase().trim();
 
-STRICT FORMATTING RULES:
+  if (command === "/start") {
+    await sendMessage(chatId,
+      `🎙 <b>Voice to Text Bot</b>\n\n` +
+      `Send me a voice message and I'll convert it to clean, formatted text.\n\n` +
+      `✨ <b>Free trial:</b> ${config.FREE_USES} voice messages\n` +
+      `💎 <b>Premium:</b> ${config.MESSAGE_LIMIT} messages for ${config.PAYMENT_AMOUNT} USDT\n\n` +
+      `Commands:\n` +
+      `/status - Check your usage\n` +
+      `/pay - Get payment instructions\n` +
+      `/verify - Verify your payment`
+    );
+    return true;
+  }
 
-1. SEQUENTIAL ACTIONS/STEPS → ALWAYS use numbered list
-   Example input: "First I need to do X, then Y, finally Z"
-   Example output:
-   1. Do X
-   2. Do Y
-   3. Do Z
-
-2. MULTIPLE IDEAS/POINTS → ALWAYS use bullet points
-   Example input: "I was thinking about the weather and also my vacation plans and maybe dinner"
-   Example output:
-   • Weather considerations
-   • Vacation plans
-   • Dinner ideas
-
-3. SINGLE THOUGHT → Clean paragraph (no list needed)
-
-ALSO:
-- Remove filler words (um, uh, like, you know, so, basically, actually)
-- Fix grammar and punctuation
-- Keep original meaning
-- Be concise
-
-OUTPUT ONLY THE FORMATTED TEXT. No explanations. No "Here's the formatted version:". Just the clean text.`
-        },
-        {
-          role: "user",
-          content: rawText
-        }
-      ],
-      max_tokens: 1000,
-      temperature: 0.3
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${OPENAI_KEY}`,
-        "Content-Type": "application/json"
-      }
+  if (command === "/status") {
+    const status = canUseBot(chatId, config.FREE_USES, userId, username, config.VIP_USERS);
+    if (status.isVIP) {
+      await sendMessage(chatId,
+        `👑 <b>VIP Status</b>\n\n` +
+        `You have unlimited free access!`
+      );
+    } else if (user.isPaid) {
+      await sendMessage(chatId,
+        `📊 <b>Your Status</b>\n\n` +
+        `Plan: Premium ✅\n` +
+        `Messages remaining: ${user.messagesRemaining}\n` +
+        `Total used: ${user.usageCount}`
+      );
+    } else {
+      const remaining = Math.max(0, config.FREE_USES - user.usageCount);
+      await sendMessage(chatId,
+        `📊 <b>Your Status</b>\n\n` +
+        `Plan: Free Trial\n` +
+        `Used: ${user.usageCount}/${config.FREE_USES}\n` +
+        `Remaining: ${remaining}\n\n` +
+        `${remaining === 0 ? "⚠️ Free trial ended. Use /pay to continue." : ""}`
+      );
     }
-  );
+    return true;
+  }
 
-  return response.data.choices[0].message.content;
+  if (command === "/pay") {
+    await sendMessage(chatId,
+      `💳 <b>Payment Instructions</b>\n\n` +
+      `Send exactly <b>${config.PAYMENT_AMOUNT} USDT</b> (TRC20) to:\n\n` +
+      `<code>${config.TRON_WALLET}</code>\n\n` +
+      `You'll get: <b>${config.MESSAGE_LIMIT} messages</b>\n\n` +
+      `⚠️ <b>Important:</b>\n` +
+      `• Use TRON network (TRC20) only\n` +
+      `• After sending, use /verify YOUR_TRON_ADDRESS\n\n` +
+      `Example:\n` +
+      `<code>/verify TXyz123abc...</code>`
+    );
+    return true;
+  }
+
+  if (command.startsWith("/verify")) {
+    const parts = text.split(" ");
+    if (parts.length < 2) {
+      await sendMessage(chatId,
+        `❌ Please provide your TRON wallet address.\n\n` +
+        `Example:\n<code>/verify TXyz123abc...</code>`
+      );
+      return true;
+    }
+
+    const userWallet = parts[1].trim();
+    await sendMessage(chatId, `🔍 Checking payment from ${userWallet}...`);
+
+    const payment = await checkPayment(userWallet);
+
+    if (payment.found) {
+      addMessages(chatId, config.MESSAGE_LIMIT);
+      await sendMessage(chatId,
+        `✅ <b>Payment Verified!</b>\n\n` +
+        `Amount: ${payment.amount} USDT\n` +
+        `TX: <code>${payment.txId}</code>\n\n` +
+        `🎉 You now have ${config.MESSAGE_LIMIT} messages!\n` +
+        `Send a voice message to try it.`
+      );
+    } else {
+      await sendMessage(chatId,
+        `❌ <b>Payment not found</b>\n\n` +
+        `Please make sure:\n` +
+        `• You sent ${config.PAYMENT_AMOUNT} USDT (TRC20)\n` +
+        `• You sent to: <code>${config.TRON_WALLET}</code>\n` +
+        `• Transaction is confirmed (wait 1-2 min)\n\n` +
+        `Try /verify again after confirmation.`
+      );
+    }
+    return true;
+  }
+
+  return false;
 }
 
-// Telegram webhook
+// Webhook endpoint
 app.post("/webhook", async (req, res) => {
   try {
-    console.log("Received update:", JSON.stringify(req.body, null, 2));
+    console.log("Update:", JSON.stringify(req.body, null, 2));
 
-    const voice = req.body.message?.voice;
-    const chatId = req.body.message?.chat?.id;
+    const message = req.body.message;
+    if (!message) return res.sendStatus(200);
 
-    if (!voice) {
-      console.log("No voice message found");
+    const chatId = message.chat?.id;
+    const userId = message.from?.id;
+    const username = message.from?.username;
+    
+    if (!chatId) return res.sendStatus(200);
+
+    // Handle text commands
+    if (message.text) {
+      const handled = await handleCommand(chatId, message.text, userId, username);
+      if (handled) return res.sendStatus(200);
+    }
+
+    // Handle voice messages
+    const voice = message.voice;
+    if (!voice) return res.sendStatus(200);
+
+    // Check if user can use bot
+    const status = canUseBot(chatId, config.FREE_USES, userId, username, config.VIP_USERS);
+    if (!status.allowed) {
+      await sendMessage(chatId,
+        `⚠️ <b>No messages remaining</b>\n\n` +
+        `Get ${config.MESSAGE_LIMIT} more messages for just <b>${config.PAYMENT_AMOUNT} USDT</b>\n\n` +
+        `Use /pay to see payment instructions.`
+      );
       return res.sendStatus(200);
     }
 
-    console.log("Voice message received, file_id:", voice.file_id);
+    // Process voice message
+    console.log("Processing voice:", voice.file_id);
 
-    // 1. Get file path from Telegram
-    const fileInfo = await axios.get(
-      `https://api.telegram.org/bot${TELEGRAM_TOKEN}/getFile?file_id=${voice.file_id}`
-    );
+    const audioFile = await downloadVoice(voice.file_id);
+    const rawText = await transcribeAudio(audioFile);
+    console.log("Transcription:", rawText);
 
-    const filePath = fileInfo.data.result.file_path;
-    const audioUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${filePath}`;
-    console.log("Audio URL:", audioUrl);
-
-    // 2. Download audio
-    const audio = await axios.get(audioUrl, { responseType: "arraybuffer" });
-    const tempFile = process.platform === "win32" ? "voice.ogg" : "/tmp/voice.ogg";
-    fs.writeFileSync(tempFile, audio.data);
-    console.log("Audio downloaded");
-
-    // 3. Transcribe audio using Whisper
-    const form = new FormData();
-    form.append("file", fs.createReadStream(tempFile));
-    form.append("model", "whisper-1");
-
-    const transcript = await axios.post(
-      "https://api.openai.com/v1/audio/transcriptions",
-      form,
-      {
-        headers: {
-          Authorization: `Bearer ${OPENAI_KEY}`,
-          ...form.getHeaders(),
-        },
-      }
-    );
-
-    const rawText = transcript.data.text;
-    console.log("Raw transcription:", rawText);
-
-    // 4. Format the text
     const formattedText = await formatText(rawText);
-    console.log("Formatted text:", formattedText);
+    console.log("Formatted:", formattedText);
 
-    // 5. Send back to Telegram
-    await axios.post(
-      `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`,
-      {
-        chat_id: chatId,
-        text: formattedText
-      }
-    );
+    // Update usage (skip for VIP)
+    if (!status.isVIP) {
+      useMessage(chatId);
+    }
+    
+    const newStatus = canUseBot(chatId, config.FREE_USES, userId, username, config.VIP_USERS);
 
-    console.log("Message sent back to user");
+    // Add footer warning if low on messages (not for VIP)
+    let footer = "";
+    if (!newStatus.isVIP && newStatus.remaining <= 2 && newStatus.remaining > 0) {
+      footer = `\n\n⚠️ ${newStatus.remaining} message${newStatus.remaining === 1 ? "" : "s"} remaining.`;
+    }
+
+    await sendMessage(chatId, formattedText + footer);
     res.sendStatus(200);
+
   } catch (err) {
     console.error("Error:", err.response?.data || err.message);
-    
     try {
       const chatId = req.body.message?.chat?.id;
       if (chatId) {
-        await axios.post(
-          `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`,
-          {
-            chat_id: chatId,
-            text: "Sorry, I couldn't process that voice message. Please try again."
-          }
-        );
+        await sendMessage(chatId, "Sorry, I couldn't process that. Please try again.");
       }
     } catch (e) {}
-    
     res.sendStatus(200);
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(config.PORT, () => {
+  console.log(`Server running on port ${config.PORT}`);
+});

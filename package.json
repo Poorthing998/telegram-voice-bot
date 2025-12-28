@@ -1,6 +1,6 @@
 {
-  "name": "telegram-voice-bot",
-  "version": "1.0.0",
+  "name": "voice-to-text-bot",
+  "version": "2.0.0",
   "main": "index.js",
   "type": "module",
   "scripts": {
