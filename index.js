@@ -4,13 +4,11 @@ import fs from "fs";
 import FormData from "form-data";
 import dotenv from "dotenv";
 
-// Load .env file (for local development)
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
-// Environment variables (from .env locally, or Render dashboard in production)
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const OPENAI_KEY = process.env.OPENAI_KEY;
 
@@ -19,7 +17,7 @@ app.get("/", (req, res) => {
   res.send("Bot is running!");
 });
 
-// Format text using GPT-4
+// Format text using GPT-4o-mini
 async function formatText(rawText) {
   const response = await axios.post(
     "https://api.openai.com/v1/chat/completions",
@@ -28,25 +26,41 @@ async function formatText(rawText) {
       messages: [
         {
           role: "system",
-          content: `You convert spoken voice notes into clean, well-structured text.
+          content: `You are a text formatter. Your ONLY job is to restructure spoken text into clean formatted text.
 
-Rules:
-- Remove filler words (um, uh, like, you know, so, basically)
+STRICT FORMATTING RULES:
+
+1. SEQUENTIAL ACTIONS/STEPS → ALWAYS use numbered list
+   Example input: "First I need to do X, then Y, finally Z"
+   Example output:
+   1. Do X
+   2. Do Y
+   3. Do Z
+
+2. MULTIPLE IDEAS/POINTS → ALWAYS use bullet points
+   Example input: "I was thinking about the weather and also my vacation plans and maybe dinner"
+   Example output:
+   • Weather considerations
+   • Vacation plans
+   • Dinner ideas
+
+3. SINGLE THOUGHT → Clean paragraph (no list needed)
+
+ALSO:
+- Remove filler words (um, uh, like, you know, so, basically, actually)
 - Fix grammar and punctuation
-- Preserve original meaning
-- If content contains steps or instructions → use numbered list
-- If content contains multiple ideas or points → use bullet points
-- If it's a single short thought → use a clean paragraph
-- Keep it concise
+- Keep original meaning
+- Be concise
 
-Output only the final cleaned text. No explanations or preamble.`
+OUTPUT ONLY THE FORMATTED TEXT. No explanations. No "Here's the formatted version:". Just the clean text.`
         },
         {
           role: "user",
           content: rawText
         }
       ],
-      max_tokens: 1000
+      max_tokens: 1000,
+      temperature: 0.3
     },
     {
       headers: {
@@ -117,8 +131,7 @@ app.post("/webhook", async (req, res) => {
       `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`,
       {
         chat_id: chatId,
-        text: formattedText,
-        parse_mode: "Markdown"
+        text: formattedText
       }
     );
 
@@ -127,7 +140,6 @@ app.post("/webhook", async (req, res) => {
   } catch (err) {
     console.error("Error:", err.response?.data || err.message);
     
-    // Try to notify user of error
     try {
       const chatId = req.body.message?.chat?.id;
       if (chatId) {
