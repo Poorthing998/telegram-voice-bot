@@ -96,7 +96,7 @@ OUTPUT ONLY THE CLEANED TEXT. Nothing else.`;
           { role: "system", content: lightPrompt },
           { role: "user", content: rawText }
         ],
-        max_tokens: 1500,
+        max_completion_tokens: 1500,
         temperature: 0.2
       },
       {
@@ -139,7 +139,7 @@ OUTPUT ONLY THE FORMATTED TEXT IN THE SPECIFIED LANGUAGE. No explanations. No me
         { role: "system", content: enhancedPrompt },
         { role: "user", content: rawText }
       ],
-      max_tokens: 1500,
+      max_completion_tokens: 1500,
       temperature: 0.3
     },
     {
