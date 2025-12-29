@@ -1,7 +1,6 @@
 import axios from "axios";
 import { config } from "./config.js";
 
-// Check USDT TRC20 payment on TRON network
 export async function checkPayment(fromAddress) {
   try {
     const response = await axios.get(

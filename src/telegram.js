@@ -5,7 +5,6 @@ import { config } from "./config.js";
 
 const API_BASE = `https://api.telegram.org/bot${config.TELEGRAM_TOKEN}`;
 
-// Send message with optional inline keyboard
 export async function sendMessage(chatId, text, keyboard = null) {
   const payload = {
     chat_id: chatId,
@@ -20,7 +19,6 @@ export async function sendMessage(chatId, text, keyboard = null) {
   await axios.post(`${API_BASE}/sendMessage`, payload);
 }
 
-// Edit message (for updating after button click)
 export async function editMessage(chatId, messageId, text, keyboard = null) {
   const payload = {
     chat_id: chatId,
@@ -35,12 +33,9 @@ export async function editMessage(chatId, messageId, text, keyboard = null) {
   
   try {
     await axios.post(`${API_BASE}/editMessageText`, payload);
-  } catch (e) {
-    // Message might be the same, ignore error
-  }
+  } catch (e) {}
 }
 
-// Answer callback query (removes loading state from button)
 export async function answerCallback(callbackId, text = "") {
   await axios.post(`${API_BASE}/answerCallbackQuery`, {
     callback_query_id: callbackId,
@@ -48,7 +43,6 @@ export async function answerCallback(callbackId, text = "") {
   });
 }
 
-// Download voice file
 export async function downloadVoice(fileId) {
   const fileInfo = await axios.get(`${API_BASE}/getFile?file_id=${fileId}`);
   const filePath = fileInfo.data.result.file_path;
@@ -61,7 +55,6 @@ export async function downloadVoice(fileId) {
   return tempFile;
 }
 
-// Transcribe audio with Whisper
 export async function transcribeAudio(filePath) {
   const form = new FormData();
   form.append("file", fs.createReadStream(filePath));

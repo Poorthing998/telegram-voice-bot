@@ -15,7 +15,6 @@ import { sendMessage, editMessage, answerCallback, downloadVoice, transcribeAudi
 const app = express();
 app.use(express.json());
 
-// Health check
 app.get("/", (req, res) => res.send("Voxly Bot is running!"));
 
 // ============ KEYBOARD BUILDERS ============
@@ -23,8 +22,6 @@ app.get("/", (req, res) => res.send("Voxly Bot is running!"));
 function buildLanguageKeyboard() {
   const languages = getLanguageButtons();
   const rows = [];
-  
-  // 2 buttons per row
   for (let i = 0; i < languages.length; i += 2) {
     const row = languages.slice(i, i + 2).map(lang => ({
       text: `${lang.flag} ${lang.name}`,
@@ -32,8 +29,17 @@ function buildLanguageKeyboard() {
     }));
     rows.push(row);
   }
-  
   return rows;
+}
+
+function buildProcessingKeyboard(lang) {
+  const modes = config.PROCESSING_MODES;
+  const labels = t(lang, 'processing_modes');
+  
+  return modes.map(mode => ([{
+    text: labels[mode] || mode,
+    callback_data: `mode_${mode}`
+  }]));
 }
 
 function buildOutputKeyboard(lang) {
@@ -60,14 +66,12 @@ function buildToneKeyboard(lang) {
 
 async function handleStart(chatId) {
   const user = getUser(chatId);
-  
-  // Always show language selection on /start
   user.awaitingSetup = 'language';
   user.setupComplete = false;
   
   await sendMessage(
     chatId,
-    "🎙 <b>Welcome to Voxly!</b>\n\nTurn your voice into perfectly formatted text.\n\nPlease select your language:",
+    "🎙 <b>Welcome to Voxly!</b>\n\nPlease select your language:",
     buildLanguageKeyboard()
   );
 }
@@ -76,52 +80,69 @@ async function handleLanguageCommand(chatId) {
   const user = getUser(chatId);
   const lang = user.language || 'en';
   
-  await sendMessage(
-    chatId,
-    t(lang, 'welcome'),
-    buildLanguageKeyboard()
-  );
+  await sendMessage(chatId, t(lang, 'welcome'), buildLanguageKeyboard());
+}
+
+async function handleModeCommand(chatId) {
+  const user = getUser(chatId);
+  const lang = user.language || 'en';
+  
+  await sendMessage(chatId, t(lang, 'select_processing'), buildProcessingKeyboard(lang));
 }
 
 async function handleOutputCommand(chatId) {
   const user = getUser(chatId);
   const lang = user.language || 'en';
   
-  await sendMessage(
-    chatId,
-    t(lang, 'select_output'),
-    buildOutputKeyboard(lang)
-  );
+  if (user.processingMode !== 'enhanced') {
+    // Only enhanced mode uses output type
+    await sendMessage(chatId, t(lang, 'current_settings_direct', {
+      language: translations[lang]?.name || lang
+    }));
+    return;
+  }
+  
+  await sendMessage(chatId, t(lang, 'select_output'), buildOutputKeyboard(lang));
 }
 
 async function handleToneCommand(chatId) {
   const user = getUser(chatId);
   const lang = user.language || 'en';
   
-  await sendMessage(
-    chatId,
-    t(lang, 'select_tone'),
-    buildToneKeyboard(lang)
-  );
+  if (user.processingMode !== 'enhanced') {
+    await sendMessage(chatId, t(lang, 'current_settings_direct', {
+      language: translations[lang]?.name || lang
+    }));
+    return;
+  }
+  
+  await sendMessage(chatId, t(lang, 'select_tone'), buildToneKeyboard(lang));
 }
 
-async function handleSettingsCommand(chatId, userId, username) {
+async function handleSettingsCommand(chatId) {
   const user = getUser(chatId);
   const lang = user.language || 'en';
   const prefs = getUserPreferences(chatId);
   
-  const langName = translations[prefs.language]?.name || prefs.language;
-  const outputName = t(lang, `output_types.${prefs.outputType}`) || prefs.outputType;
-  const toneName = t(lang, `tones.${prefs.tone}`) || prefs.tone;
-  
-  await sendMessage(
-    chatId,
-    t(lang, 'current_settings', {
+  if (prefs.processingMode === 'direct' || prefs.processingMode === 'light') {
+    const modeName = t(lang, `processing_modes.${prefs.processingMode}`);
+    await sendMessage(chatId, t(lang, 'current_settings_direct', {
+      language: translations[prefs.language]?.name || prefs.language,
+      mode: modeName
+    }));
+  } else {
+    const langName = translations[prefs.language]?.name || prefs.language;
+    const modeName = t(lang, `processing_modes.${prefs.processingMode}`);
+    const outputName = t(lang, `output_types.${prefs.outputType}`);
+    const toneName = t(lang, `tones.${prefs.tone}`);
+    
+    await sendMessage(chatId, t(lang, 'current_settings', {
       language: langName,
+      mode: modeName,
       output: outputName,
       tone: toneName
-    })
-  );
+    }));
+  }
 }
 
 async function handleStatusCommand(chatId, userId, username) {
@@ -201,24 +222,51 @@ async function handleCallback(callbackQuery) {
   
   const user = getUser(chatId);
   
-  // Handle language selection
+  // LANGUAGE SELECTION
   if (data.startsWith('lang_')) {
     const langCode = data.replace('lang_', '');
     setUserPreference(chatId, 'language', langCode);
     
     await answerCallback(callbackId, t(langCode, 'language_set'));
     
-    // Show output type selection
+    // Next: Processing mode selection
     await editMessage(
       chatId,
       messageId,
-      t(langCode, 'select_output'),
-      buildOutputKeyboard(langCode)
+      t(langCode, 'select_processing'),
+      buildProcessingKeyboard(langCode)
     );
     return;
   }
   
-  // Handle output type selection
+  // PROCESSING MODE SELECTION
+  if (data.startsWith('mode_')) {
+    const mode = data.replace('mode_', '');
+    const lang = user.language || 'en';
+    setUserPreference(chatId, 'processingMode', mode);
+    
+    const modeName = t(lang, `processing_modes.${mode}`);
+    await answerCallback(callbackId, t(lang, 'processing_set') + modeName);
+    
+    // For direct/light mode: Setup complete
+    if (mode === 'direct' || mode === 'light') {
+      completeSetup(chatId);
+      const completeKey = mode === 'direct' ? 'setup_complete_direct' : 'setup_complete_light';
+      await editMessage(chatId, messageId, t(lang, completeKey), null);
+      return;
+    }
+    
+    // For enhanced mode: Continue to output type
+    await editMessage(
+      chatId,
+      messageId,
+      t(lang, 'select_output'),
+      buildOutputKeyboard(lang)
+    );
+    return;
+  }
+  
+  // OUTPUT TYPE SELECTION
   if (data.startsWith('output_')) {
     const outputType = data.replace('output_', '');
     const lang = user.language || 'en';
@@ -227,7 +275,7 @@ async function handleCallback(callbackQuery) {
     const outputName = t(lang, `output_types.${outputType}`);
     await answerCallback(callbackId, t(lang, 'output_set') + outputName);
     
-    // Show tone selection
+    // Next: Tone selection
     await editMessage(
       chatId,
       messageId,
@@ -237,7 +285,7 @@ async function handleCallback(callbackQuery) {
     return;
   }
   
-  // Handle tone selection
+  // TONE SELECTION
   if (data.startsWith('tone_')) {
     const tone = data.replace('tone_', '');
     const lang = user.language || 'en';
@@ -247,13 +295,8 @@ async function handleCallback(callbackQuery) {
     const toneName = t(lang, `tones.${tone}`);
     await answerCallback(callbackId, t(lang, 'tone_set') + toneName);
     
-    // Show setup complete message
-    await editMessage(
-      chatId,
-      messageId,
-      t(lang, 'setup_complete'),
-      null
-    );
+    // Setup complete
+    await editMessage(chatId, messageId, t(lang, 'setup_complete_enhanced'), null);
     return;
   }
   
@@ -266,10 +309,10 @@ async function handleVoice(chatId, voice, userId, username) {
   const user = getUser(chatId);
   const lang = user.language || 'en';
   
-  // Check if setup is complete
+  // Ensure setup is complete with defaults if needed
   if (!isSetupComplete(chatId)) {
-    // Set defaults and continue
     if (!user.language) setUserPreference(chatId, 'language', 'en');
+    if (!user.processingMode) setUserPreference(chatId, 'processingMode', 'enhanced');
     if (!user.outputType) setUserPreference(chatId, 'outputType', 'general');
     if (!user.tone) setUserPreference(chatId, 'tone', 'professional');
     completeSetup(chatId);
@@ -301,7 +344,7 @@ async function handleVoice(chatId, voice, userId, username) {
     useMessage(chatId);
   }
   
-  // Check remaining messages
+  // Check remaining
   const newStatus = canUseBot(chatId, config.FREE_USES, userId, username, config.VIP_USERS);
   let footer = "";
   if (!newStatus.isVIP && newStatus.remaining <= 2 && newStatus.remaining > 0) {
@@ -317,7 +360,6 @@ app.post("/webhook", async (req, res) => {
   try {
     console.log("Update:", JSON.stringify(req.body, null, 2));
     
-    // Handle callback queries (button clicks)
     if (req.body.callback_query) {
       await handleCallback(req.body.callback_query);
       return res.sendStatus(200);
@@ -340,37 +382,34 @@ app.post("/webhook", async (req, res) => {
         await handleStart(chatId);
         return res.sendStatus(200);
       }
-      
       if (cmd === "/language") {
         await handleLanguageCommand(chatId);
         return res.sendStatus(200);
       }
-      
+      if (cmd === "/mode") {
+        await handleModeCommand(chatId);
+        return res.sendStatus(200);
+      }
       if (cmd === "/output") {
         await handleOutputCommand(chatId);
         return res.sendStatus(200);
       }
-      
       if (cmd === "/tone") {
         await handleToneCommand(chatId);
         return res.sendStatus(200);
       }
-      
       if (cmd === "/settings") {
-        await handleSettingsCommand(chatId, userId, username);
+        await handleSettingsCommand(chatId);
         return res.sendStatus(200);
       }
-      
       if (cmd === "/status") {
         await handleStatusCommand(chatId, userId, username);
         return res.sendStatus(200);
       }
-      
       if (cmd === "/pay") {
         await handlePayCommand(chatId);
         return res.sendStatus(200);
       }
-      
       if (cmd.startsWith("/verify")) {
         await handleVerifyCommand(chatId, message.text);
         return res.sendStatus(200);

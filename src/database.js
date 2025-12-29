@@ -1,5 +1,4 @@
 // Voxly Database - User management and preferences
-// For production, replace with Redis or MongoDB
 
 const users = {};
 
@@ -13,32 +12,37 @@ export function getUser(chatId) {
       totalPaid: 0,
       
       // Preferences
-      language: null,        // null means not set yet (show welcome)
+      language: null,
+      processingMode: null,   // 'direct', 'light', or 'enhanced'
       outputType: null,
       tone: null,
       setupComplete: false,
       
-      // Conversation state for setup flow
-      awaitingSetup: null    // 'language', 'output', 'tone', or null
+      // Conversation state
+      awaitingSetup: null
     };
   }
   return users[chatId];
 }
 
-// Save user preferences
 export function setUserPreference(chatId, key, value) {
   const user = getUser(chatId);
   user[key] = value;
   return user;
 }
 
-// Check if user has completed initial setup
 export function isSetupComplete(chatId) {
   const user = getUser(chatId);
-  return user.language && user.outputType && user.tone && user.setupComplete;
+  
+  // For direct/light mode, we don't need output type and tone
+  if (user.processingMode === 'direct' || user.processingMode === 'light') {
+    return user.language && user.processingMode && user.setupComplete;
+  }
+  
+  // For enhanced mode, we need everything
+  return user.language && user.processingMode && user.outputType && user.tone && user.setupComplete;
 }
 
-// Mark setup as complete
 export function completeSetup(chatId) {
   const user = getUser(chatId);
   user.setupComplete = true;
@@ -46,11 +50,11 @@ export function completeSetup(chatId) {
   return user;
 }
 
-// Get user preferences for AI prompt
 export function getUserPreferences(chatId) {
   const user = getUser(chatId);
   return {
     language: user.language || 'en',
+    processingMode: user.processingMode || 'enhanced',
     outputType: user.outputType || 'general',
     tone: user.tone || 'professional'
   };
@@ -74,7 +78,6 @@ export function useMessage(chatId) {
   return user;
 }
 
-// VIP check
 export function isVIP(userId, username, vipList) {
   return vipList.some(vip => {
     if (typeof vip === "number") return vip === userId;
@@ -85,7 +88,6 @@ export function isVIP(userId, username, vipList) {
   });
 }
 
-// Can use bot check
 export function canUseBot(chatId, freeLimit, userId = null, username = null, vipList = []) {
   if (isVIP(userId, username, vipList)) {
     return { allowed: true, remaining: Infinity, isVIP: true };
