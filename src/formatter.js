@@ -59,9 +59,6 @@ const TONE_INSTRUCTIONS = {
 
 /**
  * Process text based on user's processing mode preference
- * - direct: Just return raw transcription (no AI processing)
- * - light: Basic cleanup only
- * - enhanced: Full formatting with tone and output type
  */
 export async function formatText(rawText, preferences) {
   const { language, processingMode, outputType, tone } = preferences;
@@ -70,11 +67,12 @@ export async function formatText(rawText, preferences) {
   if (processingMode === 'direct') {
     return rawText;
   }
-  
-  // LIGHT MODE: Basic cleanup only
-  if (processingMode === 'light') {
-    const lightPrompt = `You are a text cleaner. Lightly clean up this spoken text.
 
+  // Define logic for Light vs Enhanced
+  let systemPrompt = "";
+  
+  if (processingMode === 'light') {
+    systemPrompt = `You are a text cleaner. Lightly clean up this spoken text.
 ${LANGUAGE_INSTRUCTIONS[language] || LANGUAGE_INSTRUCTIONS.en}
 
 RULES:
@@ -84,34 +82,11 @@ RULES:
 - Keep the original structure and meaning
 - Do NOT add formatting like bullets or numbers
 - Do NOT change the tone or style
-- Keep it natural and close to the original
 
 OUTPUT ONLY THE CLEANED TEXT. Nothing else.`;
-
-    const response = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        model: config.AI_MODEL,
-        messages: [
-          { role: "system", content: lightPrompt },
-          { role: "user", content: rawText }
-        ],
-        max_completion_tokens: 1500,
-        temperature: 0.2
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${config.OPENAI_KEY}`,
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
-    return response.data.choices[0].message.content;
-  }
-  
-  // ENHANCED MODE: Full formatting with tone and output type
-  const enhancedPrompt = `You are a voice-to-text formatter. Convert spoken text into clean, formatted text.
+  } else {
+    // ENHANCED MODE
+    systemPrompt = `You are a voice-to-text formatter. Convert spoken text into clean, formatted text.
 
 CRITICAL - LANGUAGE REQUIREMENT:
 ${LANGUAGE_INSTRUCTIONS[language] || LANGUAGE_INSTRUCTIONS.en}
@@ -123,32 +98,39 @@ TONE (${tone}):
 ${TONE_INSTRUCTIONS[tone] || TONE_INSTRUCTIONS.professional}
 
 ALWAYS:
-- Remove ALL filler words (um, uh, like, you know, basically, actually, so, I mean)
+- Remove ALL filler words
 - Fix grammar and punctuation
-- Preserve the original meaning
-- Make it clear and readable
 - Apply appropriate formatting based on content
 
-OUTPUT ONLY THE FORMATTED TEXT IN THE SPECIFIED LANGUAGE. No explanations. No meta-commentary. No English translations if another language is selected.`;
+OUTPUT ONLY THE FORMATTED TEXT. No explanations. No meta-commentary.`;
+  }
 
-  const response = await axios.post(
-    "https://api.openai.com/v1/chat/completions",
-    {
-      model: config.AI_MODEL,
-      messages: [
-        { role: "system", content: enhancedPrompt },
-        { role: "user", content: rawText }
-      ],
-      max_completion_tokens: 1500,
-      temperature: 0.3
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${config.OPENAI_KEY}`,
-        "Content-Type": "application/json"
+  try {
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: config.AI_MODEL,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: rawText }
+        ],
+        // Required for GPT-5 Nano:
+        max_completion_tokens: 3000,
+        // Temperature removed for reasoning model compatibility
+        // reasoning_effort: "minimal" // Optional: makes it faster for text formatting
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${config.OPENAI_KEY}`,
+          "Content-Type": "application/json"
+        }
       }
-    }
-  );
+    );
 
-  return response.data.choices[0].message.content;
+    return response.data.choices[0].message.content;
+  } catch (error) {
+    console.error("AI Formatting Error:", error.response?.data || error.message);
+    // Fallback to raw text if AI fails
+    return rawText;
+  }
 }
