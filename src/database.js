@@ -1,4 +1,4 @@
-// Simple in-memory database
+// Voxly Database - User management and preferences
 // For production, replace with Redis or MongoDB
 
 const users = {};
@@ -6,15 +6,57 @@ const users = {};
 export function getUser(chatId) {
   if (!users[chatId]) {
     users[chatId] = {
+      // Usage tracking
       usageCount: 0,
       messagesRemaining: 0,
       isPaid: false,
-      totalPaid: 0
+      totalPaid: 0,
+      
+      // Preferences
+      language: null,        // null means not set yet (show welcome)
+      outputType: null,
+      tone: null,
+      setupComplete: false,
+      
+      // Conversation state for setup flow
+      awaitingSetup: null    // 'language', 'output', 'tone', or null
     };
   }
   return users[chatId];
 }
 
+// Save user preferences
+export function setUserPreference(chatId, key, value) {
+  const user = getUser(chatId);
+  user[key] = value;
+  return user;
+}
+
+// Check if user has completed initial setup
+export function isSetupComplete(chatId) {
+  const user = getUser(chatId);
+  return user.language && user.outputType && user.tone && user.setupComplete;
+}
+
+// Mark setup as complete
+export function completeSetup(chatId) {
+  const user = getUser(chatId);
+  user.setupComplete = true;
+  user.awaitingSetup = null;
+  return user;
+}
+
+// Get user preferences for AI prompt
+export function getUserPreferences(chatId) {
+  const user = getUser(chatId);
+  return {
+    language: user.language || 'en',
+    outputType: user.outputType || 'general',
+    tone: user.tone || 'professional'
+  };
+}
+
+// Payment functions
 export function addMessages(chatId, amount) {
   const user = getUser(chatId);
   user.messagesRemaining += amount;
@@ -32,12 +74,10 @@ export function useMessage(chatId) {
   return user;
 }
 
-// Check if user is VIP
+// VIP check
 export function isVIP(userId, username, vipList) {
   return vipList.some(vip => {
-    if (typeof vip === "number") {
-      return vip === userId;
-    }
+    if (typeof vip === "number") return vip === userId;
     if (typeof vip === "string" && username) {
       return vip.toLowerCase() === username.toLowerCase();
     }
@@ -45,20 +85,18 @@ export function isVIP(userId, username, vipList) {
   });
 }
 
+// Can use bot check
 export function canUseBot(chatId, freeLimit, userId = null, username = null, vipList = []) {
-  // Check VIP status first
   if (isVIP(userId, username, vipList)) {
     return { allowed: true, remaining: Infinity, isVIP: true };
   }
   
   const user = getUser(chatId);
   
-  // Paid user with remaining messages
   if (user.isPaid && user.messagesRemaining > 0) {
     return { allowed: true, remaining: user.messagesRemaining };
   }
   
-  // Free trial
   if (user.usageCount < freeLimit) {
     return { allowed: true, remaining: freeLimit - user.usageCount, isTrial: true };
   }

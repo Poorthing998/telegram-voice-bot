@@ -1,5 +1,5 @@
 {
-  "name": "voice-to-text-bot",
+  "name": "voxly-bot",
   "version": "2.0.0",
   "main": "index.js",
   "type": "module",

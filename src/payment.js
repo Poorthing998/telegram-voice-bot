@@ -17,7 +17,6 @@ export async function checkPayment(fromAddress) {
 
     const transactions = response.data.data || [];
     
-    // Look for payment from user's address
     for (const tx of transactions) {
       if (
         tx.from.toLowerCase() === fromAddress.toLowerCase() &&

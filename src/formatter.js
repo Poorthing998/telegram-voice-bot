@@ -1,44 +1,97 @@
 import axios from "axios";
 import { config } from "./config.js";
 
-const SYSTEM_PROMPT = `You are a text formatter. Your ONLY job is to restructure spoken text into clean formatted text.
+// Output type specific instructions
+const OUTPUT_INSTRUCTIONS = {
+  general: `Format as clean, well-structured text.
+- Sequential steps → numbered list
+- Multiple points → bullet points
+- Single thought → clean paragraph`,
+  
+  email: `Format as a professional email.
+- Include appropriate greeting
+- Clear paragraphs for body
+- Professional sign-off
+- Keep it concise and actionable`,
+  
+  summary: `Create a concise summary.
+- Extract key points only
+- Use bullet points for main ideas
+- Keep it brief and scannable
+- No unnecessary details`,
+  
+  notes: `Format as organized notes.
+- Use headers if multiple topics
+- Bullet points for ideas
+- Highlight key insights
+- Easy to scan and reference`,
+  
+  todo: `Format as a to-do list.
+- Each task on its own line
+- Use checkboxes or numbers
+- Clear, actionable items
+- Prioritize if order is implied`,
+  
+  message: `Format as a chat message.
+- Keep it conversational
+- Short paragraphs
+- Friendly but clear
+- Easy to read on mobile`
+};
 
-STRICT FORMATTING RULES:
+// Tone instructions
+const TONE_INSTRUCTIONS = {
+  professional: "Use professional, business-appropriate language. Avoid slang and casual expressions.",
+  casual: "Use relaxed, everyday language. It's okay to be conversational.",
+  friendly: "Use warm, approachable language. Be personable and engaging.",
+  formal: "Use formal language. Proper grammar, no contractions, respectful tone.",
+  concise: "Be extremely brief. Cut unnecessary words. Get to the point fast."
+};
 
-1. SEQUENTIAL ACTIONS/STEPS → ALWAYS use numbered list
-   Example input: "First I need to do X, then Y, finally Z"
-   Example output:
-   1. Do X
-   2. Do Y
-   3. Do Z
+// Language-specific instructions
+const LANGUAGE_INSTRUCTIONS = {
+  en: "Output in English.",
+  fa: "Output in Persian (Farsi). Use proper Persian script and grammar. Right-to-left text.",
+  es: "Output in Spanish. Use proper Spanish grammar and expressions.",
+  de: "Output in German. Use proper German grammar and formal/informal as appropriate.",
+  fr: "Output in French. Use proper French grammar and expressions.",
+  ar: "Output in Arabic. Use proper Arabic script and grammar. Right-to-left text.",
+  tr: "Output in Turkish. Use proper Turkish grammar.",
+  ru: "Output in Russian. Use proper Cyrillic script and grammar.",
+  zh: "Output in Simplified Chinese. Use proper Chinese characters and grammar."
+};
 
-2. MULTIPLE IDEAS/POINTS → ALWAYS use bullet points
-   Example input: "I was thinking about the weather and also my vacation plans and maybe dinner"
-   Example output:
-   • Weather considerations
-   • Vacation plans
-   • Dinner ideas
+export async function formatText(rawText, preferences) {
+  const { language, outputType, tone } = preferences;
+  
+  const systemPrompt = `You are a voice-to-text formatter. Convert spoken text into clean, formatted text.
 
-3. SINGLE THOUGHT → Clean paragraph (no list needed)
+LANGUAGE:
+${LANGUAGE_INSTRUCTIONS[language] || LANGUAGE_INSTRUCTIONS.en}
 
-ALSO:
-- Remove filler words (um, uh, like, you know, so, basically, actually)
+OUTPUT FORMAT (${outputType}):
+${OUTPUT_INSTRUCTIONS[outputType] || OUTPUT_INSTRUCTIONS.general}
+
+TONE (${tone}):
+${TONE_INSTRUCTIONS[tone] || TONE_INSTRUCTIONS.professional}
+
+ALWAYS:
+- Remove filler words (um, uh, like, you know, basically, actually)
 - Fix grammar and punctuation
-- Keep original meaning
-- Be concise
+- Preserve the original meaning
+- Keep it natural and readable
 
-OUTPUT ONLY THE FORMATTED TEXT. No explanations. No "Here's the formatted version:". Just the clean text.`;
+OUTPUT ONLY THE FORMATTED TEXT. No explanations. No meta-commentary.`;
 
-export async function formatText(rawText) {
   const response = await axios.post(
     "https://api.openai.com/v1/chat/completions",
     {
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         { role: "user", content: rawText }
       ],
-      max_tokens: 1000,
+      max_tokens: 1500,
       temperature: 0.3
     },
     {

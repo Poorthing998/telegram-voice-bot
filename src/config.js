@@ -1,16 +1,28 @@
-// Configuration settings
+// Voxly Configuration
+
 export const config = {
   // Pricing
-  PAYMENT_AMOUNT: 5,        // USDT price
-  MESSAGE_LIMIT: 200,       // Messages per payment (not unlimited!)
-  FREE_USES: 3,             // Free trial messages
+  PAYMENT_AMOUNT: 5,
+  MESSAGE_LIMIT: 200,
+  FREE_USES: 3,
   
   // VIP users - free unlimited access
-  // Add Telegram user IDs OR usernames (without @)
   VIP_USERS: [
-    42656267,
-    "Sabama98", 
+    42656267,  // Your user ID
   ],
+  
+  // Supported output types
+  OUTPUT_TYPES: ['general', 'email', 'summary', 'notes', 'todo', 'message'],
+  
+  // Supported tones
+  TONES: ['professional', 'casual', 'friendly', 'formal', 'concise'],
+  
+  // Default preferences for new users
+  DEFAULTS: {
+    language: 'en',
+    outputType: 'general',
+    tone: 'professional'
+  },
   
   // USDT TRC20 settings
   USDT_CONTRACT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",

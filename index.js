@@ -3,193 +3,404 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { config } from "./src/config.js";
-import { getUser, addMessages, useMessage, canUseBot, isVIP } from "./src/database.js";
+import { translations, t, getLanguageButtons } from "./src/translations.js";
+import { 
+  getUser, setUserPreference, isSetupComplete, completeSetup,
+  getUserPreferences, addMessages, useMessage, canUseBot, isVIP 
+} from "./src/database.js";
 import { checkPayment } from "./src/payment.js";
 import { formatText } from "./src/formatter.js";
-import { sendMessage, downloadVoice, transcribeAudio } from "./src/telegram.js";
+import { sendMessage, editMessage, answerCallback, downloadVoice, transcribeAudio } from "./src/telegram.js";
 
 const app = express();
 app.use(express.json());
 
 // Health check
-app.get("/", (req, res) => {
-  res.send("Bot is running!");
-});
+app.get("/", (req, res) => res.send("Voxly Bot is running!"));
 
-// Handle commands
-async function handleCommand(chatId, text, userId, username) {
-  const user = getUser(chatId);
-  const command = text.toLowerCase().trim();
+// ============ KEYBOARD BUILDERS ============
 
-  if (command === "/start") {
-    await sendMessage(chatId,
-      `🎙 <b>Voice to Text Bot</b>\n\n` +
-      `Send me a voice message and I'll convert it to clean, formatted text.\n\n` +
-      `✨ <b>Free trial:</b> ${config.FREE_USES} voice messages\n` +
-      `💎 <b>Premium:</b> ${config.MESSAGE_LIMIT} messages for ${config.PAYMENT_AMOUNT} USDT\n\n` +
-      `Commands:\n` +
-      `/status - Check your usage\n` +
-      `/pay - Get payment instructions\n` +
-      `/verify - Verify your payment`
-    );
-    return true;
+function buildLanguageKeyboard() {
+  const languages = getLanguageButtons();
+  const rows = [];
+  
+  // 2 buttons per row
+  for (let i = 0; i < languages.length; i += 2) {
+    const row = languages.slice(i, i + 2).map(lang => ({
+      text: `${lang.flag} ${lang.name}`,
+      callback_data: `lang_${lang.code}`
+    }));
+    rows.push(row);
   }
-
-  if (command === "/status") {
-    const status = canUseBot(chatId, config.FREE_USES, userId, username, config.VIP_USERS);
-    if (status.isVIP) {
-      await sendMessage(chatId,
-        `👑 <b>VIP Status</b>\n\n` +
-        `You have unlimited free access!`
-      );
-    } else if (user.isPaid) {
-      await sendMessage(chatId,
-        `📊 <b>Your Status</b>\n\n` +
-        `Plan: Premium ✅\n` +
-        `Messages remaining: ${user.messagesRemaining}\n` +
-        `Total used: ${user.usageCount}`
-      );
-    } else {
-      const remaining = Math.max(0, config.FREE_USES - user.usageCount);
-      await sendMessage(chatId,
-        `📊 <b>Your Status</b>\n\n` +
-        `Plan: Free Trial\n` +
-        `Used: ${user.usageCount}/${config.FREE_USES}\n` +
-        `Remaining: ${remaining}\n\n` +
-        `${remaining === 0 ? "⚠️ Free trial ended. Use /pay to continue." : ""}`
-      );
-    }
-    return true;
-  }
-
-  if (command === "/pay") {
-    await sendMessage(chatId,
-      `💳 <b>Payment Instructions</b>\n\n` +
-      `Send exactly <b>${config.PAYMENT_AMOUNT} USDT</b> (TRC20) to:\n\n` +
-      `<code>${config.TRON_WALLET}</code>\n\n` +
-      `You'll get: <b>${config.MESSAGE_LIMIT} messages</b>\n\n` +
-      `⚠️ <b>Important:</b>\n` +
-      `• Use TRON network (TRC20) only\n` +
-      `• After sending, use /verify YOUR_TRON_ADDRESS\n\n` +
-      `Example:\n` +
-      `<code>/verify TXyz123abc...</code>`
-    );
-    return true;
-  }
-
-  if (command.startsWith("/verify")) {
-    const parts = text.split(" ");
-    if (parts.length < 2) {
-      await sendMessage(chatId,
-        `❌ Please provide your TRON wallet address.\n\n` +
-        `Example:\n<code>/verify TXyz123abc...</code>`
-      );
-      return true;
-    }
-
-    const userWallet = parts[1].trim();
-    await sendMessage(chatId, `🔍 Checking payment from ${userWallet}...`);
-
-    const payment = await checkPayment(userWallet);
-
-    if (payment.found) {
-      addMessages(chatId, config.MESSAGE_LIMIT);
-      await sendMessage(chatId,
-        `✅ <b>Payment Verified!</b>\n\n` +
-        `Amount: ${payment.amount} USDT\n` +
-        `TX: <code>${payment.txId}</code>\n\n` +
-        `🎉 You now have ${config.MESSAGE_LIMIT} messages!\n` +
-        `Send a voice message to try it.`
-      );
-    } else {
-      await sendMessage(chatId,
-        `❌ <b>Payment not found</b>\n\n` +
-        `Please make sure:\n` +
-        `• You sent ${config.PAYMENT_AMOUNT} USDT (TRC20)\n` +
-        `• You sent to: <code>${config.TRON_WALLET}</code>\n` +
-        `• Transaction is confirmed (wait 1-2 min)\n\n` +
-        `Try /verify again after confirmation.`
-      );
-    }
-    return true;
-  }
-
-  return false;
+  
+  return rows;
 }
 
-// Webhook endpoint
+function buildOutputKeyboard(lang) {
+  const outputTypes = config.OUTPUT_TYPES;
+  const labels = t(lang, 'output_types');
+  
+  return outputTypes.map(type => ([{
+    text: labels[type] || type,
+    callback_data: `output_${type}`
+  }]));
+}
+
+function buildToneKeyboard(lang) {
+  const tones = config.TONES;
+  const labels = t(lang, 'tones');
+  
+  return tones.map(tone => ([{
+    text: labels[tone] || tone,
+    callback_data: `tone_${tone}`
+  }]));
+}
+
+// ============ COMMAND HANDLERS ============
+
+async function handleStart(chatId) {
+  const user = getUser(chatId);
+  
+  // Always show language selection on /start
+  user.awaitingSetup = 'language';
+  user.setupComplete = false;
+  
+  await sendMessage(
+    chatId,
+    "🎙 <b>Welcome to Voxly!</b>\n\nTurn your voice into perfectly formatted text.\n\nPlease select your language:",
+    buildLanguageKeyboard()
+  );
+}
+
+async function handleLanguageCommand(chatId) {
+  const user = getUser(chatId);
+  const lang = user.language || 'en';
+  
+  await sendMessage(
+    chatId,
+    t(lang, 'welcome'),
+    buildLanguageKeyboard()
+  );
+}
+
+async function handleOutputCommand(chatId) {
+  const user = getUser(chatId);
+  const lang = user.language || 'en';
+  
+  await sendMessage(
+    chatId,
+    t(lang, 'select_output'),
+    buildOutputKeyboard(lang)
+  );
+}
+
+async function handleToneCommand(chatId) {
+  const user = getUser(chatId);
+  const lang = user.language || 'en';
+  
+  await sendMessage(
+    chatId,
+    t(lang, 'select_tone'),
+    buildToneKeyboard(lang)
+  );
+}
+
+async function handleSettingsCommand(chatId, userId, username) {
+  const user = getUser(chatId);
+  const lang = user.language || 'en';
+  const prefs = getUserPreferences(chatId);
+  
+  const langName = translations[prefs.language]?.name || prefs.language;
+  const outputName = t(lang, `output_types.${prefs.outputType}`) || prefs.outputType;
+  const toneName = t(lang, `tones.${prefs.tone}`) || prefs.tone;
+  
+  await sendMessage(
+    chatId,
+    t(lang, 'current_settings', {
+      language: langName,
+      output: outputName,
+      tone: toneName
+    })
+  );
+}
+
+async function handleStatusCommand(chatId, userId, username) {
+  const user = getUser(chatId);
+  const lang = user.language || 'en';
+  const status = canUseBot(chatId, config.FREE_USES, userId, username, config.VIP_USERS);
+  
+  if (status.isVIP) {
+    await sendMessage(chatId, t(lang, 'status_vip'));
+  } else if (user.isPaid) {
+    await sendMessage(chatId, t(lang, 'status_premium', {
+      remaining: user.messagesRemaining,
+      used: user.usageCount
+    }));
+  } else {
+    const remaining = Math.max(0, config.FREE_USES - user.usageCount);
+    let msg = t(lang, 'status_trial', {
+      used: user.usageCount,
+      total: config.FREE_USES,
+      remaining: remaining
+    });
+    if (remaining === 0) {
+      msg += t(lang, 'trial_ended');
+    }
+    await sendMessage(chatId, msg);
+  }
+}
+
+async function handlePayCommand(chatId) {
+  const user = getUser(chatId);
+  const lang = user.language || 'en';
+  
+  await sendMessage(chatId, t(lang, 'pay_instructions', {
+    amount: config.PAYMENT_AMOUNT,
+    wallet: config.TRON_WALLET,
+    messages: config.MESSAGE_LIMIT
+  }));
+}
+
+async function handleVerifyCommand(chatId, text) {
+  const user = getUser(chatId);
+  const lang = user.language || 'en';
+  
+  const parts = text.split(" ");
+  if (parts.length < 2) {
+    await sendMessage(chatId, t(lang, 'verify_prompt'));
+    return;
+  }
+  
+  const userWallet = parts[1].trim();
+  await sendMessage(chatId, t(lang, 'verify_checking'));
+  
+  const payment = await checkPayment(userWallet);
+  
+  if (payment.found) {
+    addMessages(chatId, config.MESSAGE_LIMIT);
+    await sendMessage(chatId, t(lang, 'verify_success', {
+      amount: payment.amount,
+      tx: payment.txId,
+      messages: config.MESSAGE_LIMIT
+    }));
+  } else {
+    await sendMessage(chatId, t(lang, 'verify_failed', {
+      amount: config.PAYMENT_AMOUNT,
+      wallet: config.TRON_WALLET
+    }));
+  }
+}
+
+// ============ CALLBACK HANDLER ============
+
+async function handleCallback(callbackQuery) {
+  const chatId = callbackQuery.message.chat.id;
+  const messageId = callbackQuery.message.message_id;
+  const data = callbackQuery.data;
+  const callbackId = callbackQuery.id;
+  
+  const user = getUser(chatId);
+  
+  // Handle language selection
+  if (data.startsWith('lang_')) {
+    const langCode = data.replace('lang_', '');
+    setUserPreference(chatId, 'language', langCode);
+    
+    await answerCallback(callbackId, t(langCode, 'language_set'));
+    
+    // Show output type selection
+    await editMessage(
+      chatId,
+      messageId,
+      t(langCode, 'select_output'),
+      buildOutputKeyboard(langCode)
+    );
+    return;
+  }
+  
+  // Handle output type selection
+  if (data.startsWith('output_')) {
+    const outputType = data.replace('output_', '');
+    const lang = user.language || 'en';
+    setUserPreference(chatId, 'outputType', outputType);
+    
+    const outputName = t(lang, `output_types.${outputType}`);
+    await answerCallback(callbackId, t(lang, 'output_set') + outputName);
+    
+    // Show tone selection
+    await editMessage(
+      chatId,
+      messageId,
+      t(lang, 'select_tone'),
+      buildToneKeyboard(lang)
+    );
+    return;
+  }
+  
+  // Handle tone selection
+  if (data.startsWith('tone_')) {
+    const tone = data.replace('tone_', '');
+    const lang = user.language || 'en';
+    setUserPreference(chatId, 'tone', tone);
+    completeSetup(chatId);
+    
+    const toneName = t(lang, `tones.${tone}`);
+    await answerCallback(callbackId, t(lang, 'tone_set') + toneName);
+    
+    // Show setup complete message
+    await editMessage(
+      chatId,
+      messageId,
+      t(lang, 'setup_complete'),
+      null
+    );
+    return;
+  }
+  
+  await answerCallback(callbackId);
+}
+
+// ============ VOICE MESSAGE HANDLER ============
+
+async function handleVoice(chatId, voice, userId, username) {
+  const user = getUser(chatId);
+  const lang = user.language || 'en';
+  
+  // Check if setup is complete
+  if (!isSetupComplete(chatId)) {
+    // Set defaults and continue
+    if (!user.language) setUserPreference(chatId, 'language', 'en');
+    if (!user.outputType) setUserPreference(chatId, 'outputType', 'general');
+    if (!user.tone) setUserPreference(chatId, 'tone', 'professional');
+    completeSetup(chatId);
+  }
+  
+  // Check usage limits
+  const status = canUseBot(chatId, config.FREE_USES, userId, username, config.VIP_USERS);
+  if (!status.allowed) {
+    await sendMessage(chatId, t(lang, 'no_messages', {
+      messages: config.MESSAGE_LIMIT,
+      amount: config.PAYMENT_AMOUNT
+    }));
+    return;
+  }
+  
+  // Process voice
+  console.log("Processing voice:", voice.file_id);
+  
+  const audioFile = await downloadVoice(voice.file_id);
+  const rawText = await transcribeAudio(audioFile);
+  console.log("Transcription:", rawText);
+  
+  const preferences = getUserPreferences(chatId);
+  const formattedText = await formatText(rawText, preferences);
+  console.log("Formatted:", formattedText);
+  
+  // Update usage (skip for VIP)
+  if (!status.isVIP) {
+    useMessage(chatId);
+  }
+  
+  // Check remaining messages
+  const newStatus = canUseBot(chatId, config.FREE_USES, userId, username, config.VIP_USERS);
+  let footer = "";
+  if (!newStatus.isVIP && newStatus.remaining <= 2 && newStatus.remaining > 0) {
+    footer = t(lang, 'messages_remaining', { count: newStatus.remaining });
+  }
+  
+  await sendMessage(chatId, formattedText + footer);
+}
+
+// ============ MAIN WEBHOOK ============
+
 app.post("/webhook", async (req, res) => {
   try {
     console.log("Update:", JSON.stringify(req.body, null, 2));
-
+    
+    // Handle callback queries (button clicks)
+    if (req.body.callback_query) {
+      await handleCallback(req.body.callback_query);
+      return res.sendStatus(200);
+    }
+    
     const message = req.body.message;
     if (!message) return res.sendStatus(200);
-
+    
     const chatId = message.chat?.id;
     const userId = message.from?.id;
     const username = message.from?.username;
     
     if (!chatId) return res.sendStatus(200);
-
+    
     // Handle text commands
     if (message.text) {
-      const handled = await handleCommand(chatId, message.text, userId, username);
-      if (handled) return res.sendStatus(200);
-    }
-
-    // Handle voice messages
-    const voice = message.voice;
-    if (!voice) return res.sendStatus(200);
-
-    // Check if user can use bot
-    const status = canUseBot(chatId, config.FREE_USES, userId, username, config.VIP_USERS);
-    if (!status.allowed) {
-      await sendMessage(chatId,
-        `⚠️ <b>No messages remaining</b>\n\n` +
-        `Get ${config.MESSAGE_LIMIT} more messages for just <b>${config.PAYMENT_AMOUNT} USDT</b>\n\n` +
-        `Use /pay to see payment instructions.`
-      );
-      return res.sendStatus(200);
-    }
-
-    // Process voice message
-    console.log("Processing voice:", voice.file_id);
-
-    const audioFile = await downloadVoice(voice.file_id);
-    const rawText = await transcribeAudio(audioFile);
-    console.log("Transcription:", rawText);
-
-    const formattedText = await formatText(rawText);
-    console.log("Formatted:", formattedText);
-
-    // Update usage (skip for VIP)
-    if (!status.isVIP) {
-      useMessage(chatId);
+      const cmd = message.text.toLowerCase().trim();
+      
+      if (cmd === "/start") {
+        await handleStart(chatId);
+        return res.sendStatus(200);
+      }
+      
+      if (cmd === "/language") {
+        await handleLanguageCommand(chatId);
+        return res.sendStatus(200);
+      }
+      
+      if (cmd === "/output") {
+        await handleOutputCommand(chatId);
+        return res.sendStatus(200);
+      }
+      
+      if (cmd === "/tone") {
+        await handleToneCommand(chatId);
+        return res.sendStatus(200);
+      }
+      
+      if (cmd === "/settings") {
+        await handleSettingsCommand(chatId, userId, username);
+        return res.sendStatus(200);
+      }
+      
+      if (cmd === "/status") {
+        await handleStatusCommand(chatId, userId, username);
+        return res.sendStatus(200);
+      }
+      
+      if (cmd === "/pay") {
+        await handlePayCommand(chatId);
+        return res.sendStatus(200);
+      }
+      
+      if (cmd.startsWith("/verify")) {
+        await handleVerifyCommand(chatId, message.text);
+        return res.sendStatus(200);
+      }
     }
     
-    const newStatus = canUseBot(chatId, config.FREE_USES, userId, username, config.VIP_USERS);
-
-    // Add footer warning if low on messages (not for VIP)
-    let footer = "";
-    if (!newStatus.isVIP && newStatus.remaining <= 2 && newStatus.remaining > 0) {
-      footer = `\n\n⚠️ ${newStatus.remaining} message${newStatus.remaining === 1 ? "" : "s"} remaining.`;
+    // Handle voice messages
+    if (message.voice) {
+      await handleVoice(chatId, message.voice, userId, username);
+      return res.sendStatus(200);
     }
-
-    await sendMessage(chatId, formattedText + footer);
+    
     res.sendStatus(200);
-
+    
   } catch (err) {
     console.error("Error:", err.response?.data || err.message);
+    
     try {
-      const chatId = req.body.message?.chat?.id;
+      const chatId = req.body.message?.chat?.id || req.body.callback_query?.message?.chat?.id;
       if (chatId) {
-        await sendMessage(chatId, "Sorry, I couldn't process that. Please try again.");
+        const user = getUser(chatId);
+        const lang = user.language || 'en';
+        await sendMessage(chatId, t(lang, 'error'));
       }
     } catch (e) {}
+    
     res.sendStatus(200);
   }
 });
 
 app.listen(config.PORT, () => {
-  console.log(`Server running on port ${config.PORT}`);
+  console.log(`Voxly Bot running on port ${config.PORT}`);
 });
