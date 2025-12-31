@@ -1,14 +1,14 @@
 import axios from "axios";
 import { config } from "./config.js";
 
-// Language output instructions - ensures output is ONLY in selected language
+// Language output instructions
 const LANGUAGE_INSTRUCTIONS = {
   en: "OUTPUT MUST BE IN ENGLISH ONLY. Do not use any other language.",
-  fa: "OUTPUT MUST BE IN PERSIAN (FARSI) ONLY. Use Persian script. Do not use any other language. Right-to-left text.",
+  fa: "OUTPUT MUST BE IN PERSIAN (FARSI) ONLY. Use Persian script. Do not use any other language.",
   es: "OUTPUT MUST BE IN SPANISH ONLY. Do not use any other language.",
   de: "OUTPUT MUST BE IN GERMAN ONLY. Do not use any other language.",
   fr: "OUTPUT MUST BE IN FRENCH ONLY. Do not use any other language.",
-  ar: "OUTPUT MUST BE IN ARABIC ONLY. Use Arabic script. Do not use any other language. Right-to-left text.",
+  ar: "OUTPUT MUST BE IN ARABIC ONLY. Use Arabic script. Do not use any other language.",
   tr: "OUTPUT MUST BE IN TURKISH ONLY. Do not use any other language.",
   ru: "OUTPUT MUST BE IN RUSSIAN ONLY. Use Cyrillic script. Do not use any other language.",
   zh: "OUTPUT MUST BE IN SIMPLIFIED CHINESE ONLY. Use Chinese characters. Do not use any other language."
@@ -16,36 +16,12 @@ const LANGUAGE_INSTRUCTIONS = {
 
 // Output type specific instructions
 const OUTPUT_INSTRUCTIONS = {
-  general: `Format as clean, well-structured text.
-- Sequential steps → numbered list
-- Multiple points → bullet points
-- Single thought → clean paragraph`,
-  
-  email: `Format as a professional email.
-- Include appropriate greeting
-- Clear paragraphs for body
-- Professional sign-off
-- Keep it concise and actionable`,
-  
-  summary: `Create a concise summary.
-- Extract key points only
-- Use bullet points for main ideas
-- Keep it brief and scannable`,
-  
-  notes: `Format as organized notes.
-- Use bullet points for ideas
-- Highlight key insights
-- Easy to scan and reference`,
-  
-  todo: `Format as a to-do list.
-- Each task on its own line
-- Clear, actionable items
-- Use numbers or checkboxes`,
-  
-  message: `Format as a chat message.
-- Keep it conversational
-- Short paragraphs
-- Easy to read on mobile`
+  general: `Format as clean, well-structured text. Use numbered lists for steps, bullet points for multiple items, clean paragraphs for single thoughts.`,
+  email: `Format as a professional email with greeting, clear body paragraphs, and professional sign-off.`,
+  summary: `Create a concise summary with key points as bullet points. Keep it brief and scannable.`,
+  notes: `Format as organized notes with bullet points for ideas and key insights.`,
+  todo: `Format as a to-do list with each task on its own line. Clear, actionable items.`,
+  message: `Format as a chat message. Keep it conversational with short paragraphs.`
 };
 
 // Tone instructions
@@ -58,84 +34,100 @@ const TONE_INSTRUCTIONS = {
 };
 
 /**
- * Process text based on user's processing mode preference
- * - direct: Just return raw transcription (no AI processing)
- * - light: Basic cleanup only
- * - enhanced: Full formatting with tone and output type
+ * Call OpenAI API with correct parameters for GPT-5 models
+ */
+async function callOpenAI(systemPrompt, userContent) {
+  console.log("=== OpenAI API Call ===");
+  console.log("Model:", config.AI_MODEL);
+  
+  // GPT-5 models require max_completion_tokens, NOT max_tokens
+  const requestBody = {
+    model: config.AI_MODEL,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent }
+    ],
+    max_completion_tokens: 2000  // CORRECT parameter for GPT-5 models
+  };
+  
+  console.log("Request body:", JSON.stringify(requestBody, null, 2));
+  
+  const response = await axios.post(
+    "https://api.openai.com/v1/chat/completions",
+    requestBody,
+    {
+      headers: {
+        Authorization: `Bearer ${config.OPENAI_KEY}`,
+        "Content-Type": "application/json"
+      },
+      timeout: 60000
+    }
+  );
+  
+  console.log("Response status:", response.status);
+  console.log("Response data:", JSON.stringify(response.data, null, 2));
+  
+  const content = response.data?.choices?.[0]?.message?.content;
+  
+  if (!content || content.trim() === '') {
+    console.error("ERROR: Empty response from OpenAI");
+    throw new Error("AI returned empty response");
+  }
+  
+  return content;
+}
+
+/**
+ * Process text based on user's processing mode
  */
 export async function formatText(rawText, preferences) {
   const { language, processingMode, outputType, tone } = preferences;
   
-  // Safety check: if no raw text, return placeholder
+  console.log("\n========== FORMAT TEXT ==========");
+  console.log("Mode:", processingMode);
+  console.log("Language:", language);
+  console.log("Output type:", outputType);
+  console.log("Tone:", tone);
+  
   if (!rawText || rawText.trim() === '') {
     return "[No speech detected]";
   }
   
-  // DIRECT MODE: Return raw transcription, no changes
+  // MODE 1: DIRECT - Raw transcription, no AI
   if (processingMode === 'direct') {
+    console.log("→ DIRECT: returning raw transcription");
     return rawText;
   }
   
-  // LIGHT MODE: Basic cleanup only
+  // MODE 2: LIGHT - Basic cleanup only
   if (processingMode === 'light') {
-    try {
-      const lightPrompt = `You are a text cleaner. Lightly clean up this spoken text.
+    console.log("→ LIGHT: basic cleanup");
+    
+    const prompt = `Clean up this spoken text lightly.
 
 ${LANGUAGE_INSTRUCTIONS[language] || LANGUAGE_INSTRUCTIONS.en}
 
-RULES:
-- Remove filler words (um, uh, like, you know, basically, actually)
-- Fix obvious grammar errors
-- Fix punctuation
-- Keep the original structure and meaning
-- Do NOT add formatting like bullets or numbers
-- Do NOT change the tone or style
-- Keep it natural and close to the original
+Rules:
+- Remove filler words (um, uh, like, you know)
+- Fix grammar and punctuation
+- Keep original structure and meaning
+- Do NOT add formatting or change tone
 
-OUTPUT ONLY THE CLEANED TEXT. Nothing else.`;
+Output only the cleaned text.`;
 
-      const response = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: config.AI_MODEL,
-          messages: [
-            { role: "system", content: lightPrompt },
-            { role: "user", content: rawText }
-          ],
-          max_tokens: 1500,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${config.OPENAI_KEY}`,
-            "Content-Type": "application/json"
-          },
-          timeout: 30000 // 30 second timeout
-        }
-      );
-
-      const result = response.data?.choices?.[0]?.message?.content;
-      
-      // If empty result, fallback to raw text
-      if (!result || result.trim() === '') {
-        console.log("Light mode returned empty, using raw text");
-        return rawText;
-      }
-      
-      return result;
-      
+    try {
+      return await callOpenAI(prompt, rawText);
     } catch (err) {
-      console.error("Light formatting error:", JSON.stringify(err.response?.data || err.message));
-      console.error("Full error:", err);
-      // Fallback to raw text on error
-      return rawText;
+      console.error("LIGHT ERROR:", err.response?.data || err.message);
+      return `⚠️ Processing error:\n\n${rawText}`;
     }
   }
   
-  // ENHANCED MODE: Full formatting with tone and output type
-  try {
-    const enhancedPrompt = `You are a voice-to-text formatter. Convert spoken text into clean, formatted text.
+  // MODE 3: ENHANCED - Full AI formatting
+  console.log("→ ENHANCED: full AI formatting");
+  
+  const prompt = `You are a voice-to-text formatter. Transform spoken text into polished, formatted content.
 
-CRITICAL - LANGUAGE REQUIREMENT:
 ${LANGUAGE_INSTRUCTIONS[language] || LANGUAGE_INSTRUCTIONS.en}
 
 OUTPUT FORMAT (${outputType}):
@@ -144,52 +136,19 @@ ${OUTPUT_INSTRUCTIONS[outputType] || OUTPUT_INSTRUCTIONS.general}
 TONE (${tone}):
 ${TONE_INSTRUCTIONS[tone] || TONE_INSTRUCTIONS.professional}
 
-ALWAYS:
-- Remove ALL filler words (um, uh, like, you know, basically, actually, so, I mean)
-- Fix grammar and punctuation
-- Preserve the original meaning
-- Make it clear and readable
-- Apply appropriate formatting based on content
+INSTRUCTIONS:
+- Remove ALL filler words
+- Fix all grammar and punctuation
+- If user describes wanting an email → write a complete professional email
+- If user describes a to-do → format as proper task list
+- Apply the specified format and tone strictly
 
-OUTPUT ONLY THE FORMATTED TEXT IN THE SPECIFIED LANGUAGE. No explanations. No meta-commentary. No English translations if another language is selected.`;
+Output only the final formatted text. No explanations.`;
 
-    const response = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        model: config.AI_MODEL,
-        messages: [
-          { role: "system", content: enhancedPrompt },
-          { role: "user", content: rawText }
-        ],
-        max_tokens: 1500,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${config.OPENAI_KEY}`,
-          "Content-Type": "application/json"
-        },
-        timeout: 30000 // 30 second timeout
-      }
-    );
-
-    // Debug: log response structure
-    console.log("API Response status:", response.status);
-    console.log("API Response choices:", JSON.stringify(response.data?.choices));
-    
-    const result = response.data?.choices?.[0]?.message?.content;
-    
-    // If empty result, fallback to raw text
-    if (!result || result.trim() === '') {
-      console.log("Enhanced mode returned empty, using raw text");
-      return rawText;
-    }
-    
-    return result;
-    
+  try {
+    return await callOpenAI(prompt, rawText);
   } catch (err) {
-    console.error("Enhanced formatting error:", JSON.stringify(err.response?.data || err.message));
-    console.error("Full error:", err);
-    // Fallback to raw text on error
-    return rawText;
+    console.error("ENHANCED ERROR:", err.response?.data || err.message);
+    return `⚠️ AI formatting failed:\n\n${rawText}`;
   }
 }
