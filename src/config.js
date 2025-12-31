@@ -4,11 +4,13 @@ export const config = {
   // Pricing
   PAYMENT_AMOUNT: 5,
   MESSAGE_LIMIT: 200,
-  FREE_USES: 3,
+  FREE_USES: 10,
   
   // VIP users - free unlimited access
   VIP_USERS: [
     42656267,  // Your user ID
+    62709067,  // Another user ID
+    486398840,  // Another user ID
   ],
   
   // Processing modes (how much AI touches the text)
