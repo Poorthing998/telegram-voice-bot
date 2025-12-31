@@ -66,6 +66,11 @@ const TONE_INSTRUCTIONS = {
 export async function formatText(rawText, preferences) {
   const { language, processingMode, outputType, tone } = preferences;
   
+  // Safety check: if no raw text, return placeholder
+  if (!rawText || rawText.trim() === '') {
+    return "[No speech detected]";
+  }
+  
   // DIRECT MODE: Return raw transcription, no changes
   if (processingMode === 'direct') {
     return rawText;
@@ -73,7 +78,8 @@ export async function formatText(rawText, preferences) {
   
   // LIGHT MODE: Basic cleanup only
   if (processingMode === 'light') {
-    const lightPrompt = `You are a text cleaner. Lightly clean up this spoken text.
+    try {
+      const lightPrompt = `You are a text cleaner. Lightly clean up this spoken text.
 
 ${LANGUAGE_INSTRUCTIONS[language] || LANGUAGE_INSTRUCTIONS.en}
 
@@ -88,29 +94,46 @@ RULES:
 
 OUTPUT ONLY THE CLEANED TEXT. Nothing else.`;
 
-    const response = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        model: config.AI_MODEL,
-        messages: [
-          { role: "system", content: lightPrompt },
-          { role: "user", content: rawText }
-        ],
-        max_completion_tokens: 1500,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${config.OPENAI_KEY}`,
-          "Content-Type": "application/json"
+      const response = await axios.post(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          model: config.AI_MODEL,
+          messages: [
+            { role: "system", content: lightPrompt },
+            { role: "user", content: rawText }
+          ],
+          max_tokens: 1500,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${config.OPENAI_KEY}`,
+            "Content-Type": "application/json"
+          },
+          timeout: 30000 // 30 second timeout
         }
-      }
-    );
+      );
 
-    return response.data.choices[0].message.content;
+      const result = response.data?.choices?.[0]?.message?.content;
+      
+      // If empty result, fallback to raw text
+      if (!result || result.trim() === '') {
+        console.log("Light mode returned empty, using raw text");
+        return rawText;
+      }
+      
+      return result;
+      
+    } catch (err) {
+      console.error("Light formatting error:", JSON.stringify(err.response?.data || err.message));
+      console.error("Full error:", err);
+      // Fallback to raw text on error
+      return rawText;
+    }
   }
   
   // ENHANCED MODE: Full formatting with tone and output type
-  const enhancedPrompt = `You are a voice-to-text formatter. Convert spoken text into clean, formatted text.
+  try {
+    const enhancedPrompt = `You are a voice-to-text formatter. Convert spoken text into clean, formatted text.
 
 CRITICAL - LANGUAGE REQUIREMENT:
 ${LANGUAGE_INSTRUCTIONS[language] || LANGUAGE_INSTRUCTIONS.en}
@@ -130,23 +153,43 @@ ALWAYS:
 
 OUTPUT ONLY THE FORMATTED TEXT IN THE SPECIFIED LANGUAGE. No explanations. No meta-commentary. No English translations if another language is selected.`;
 
-  const response = await axios.post(
-    "https://api.openai.com/v1/chat/completions",
-    {
-      model: config.AI_MODEL,
-      messages: [
-        { role: "system", content: enhancedPrompt },
-        { role: "user", content: rawText }
-      ],
-      max_completion_tokens: 1500,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${config.OPENAI_KEY}`,
-        "Content-Type": "application/json"
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: config.AI_MODEL,
+        messages: [
+          { role: "system", content: enhancedPrompt },
+          { role: "user", content: rawText }
+        ],
+        max_tokens: 1500,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${config.OPENAI_KEY}`,
+          "Content-Type": "application/json"
+        },
+        timeout: 30000 // 30 second timeout
       }
-    }
-  );
+    );
 
-  return response.data.choices[0].message.content;
+    // Debug: log response structure
+    console.log("API Response status:", response.status);
+    console.log("API Response choices:", JSON.stringify(response.data?.choices));
+    
+    const result = response.data?.choices?.[0]?.message?.content;
+    
+    // If empty result, fallback to raw text
+    if (!result || result.trim() === '') {
+      console.log("Enhanced mode returned empty, using raw text");
+      return rawText;
+    }
+    
+    return result;
+    
+  } catch (err) {
+    console.error("Enhanced formatting error:", JSON.stringify(err.response?.data || err.message));
+    console.error("Full error:", err);
+    // Fallback to raw text on error
+    return rawText;
+  }
 }

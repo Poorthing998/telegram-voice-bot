@@ -28,7 +28,7 @@ export const config = {
     tone: 'professional'
   },
   
-  // AI Model - GPT-5 Nano (fastest & cheapest)
+  // AI Model - GPT-5 Nano (smallest/fastest in GPT-5 family)
   AI_MODEL: "gpt-5-nano",
   
   // USDT TRC20 settings
