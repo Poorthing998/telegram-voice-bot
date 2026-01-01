@@ -4,13 +4,11 @@ export const config = {
   // Pricing
   PAYMENT_AMOUNT: 5,
   MESSAGE_LIMIT: 200,
-  FREE_USES: 10,
+  FREE_USES: 3,
   
   // VIP users - free unlimited access
   VIP_USERS: [
     42656267,  // Your user ID
-    62709067,  // Another user ID
-    486398840,  // Another user ID
   ],
   
   // Processing modes (how much AI touches the text)
@@ -25,13 +23,16 @@ export const config = {
   // Default preferences
   DEFAULTS: {
     language: 'en',
-    processingMode: 'enhanced',  // direct, light, or enhanced
+    processingMode: 'enhanced',
     outputType: 'general',
     tone: 'professional'
   },
   
-  // AI Model - GPT-5 Nano (smallest/fastest in GPT-5 family)
-  AI_MODEL: "gpt-5-nano",
+  // AI Model - gpt-4.1-nano: fast, cheap, NON-REASONING, RELIABLE
+  // Unlike gpt-5-nano which wastes tokens on internal reasoning,
+  // gpt-4.1-nano gives you actual output every time
+  // Pricing: $0.10/1M input, $0.40/1M output
+  AI_MODEL: "gpt-4.1-nano",
   
   // USDT TRC20 settings
   USDT_CONTRACT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
