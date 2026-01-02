@@ -95,8 +95,7 @@ async function handleOutputCommand(chatId) {
   const lang = user.language || 'en';
   
   if (user.processingMode !== 'enhanced') {
-    // Only enhanced mode uses output type
-    await sendMessage(chatId, t(lang, 'current_settings_direct', {
+    await sendMessage(chatId, t(lang, 'current_settings_' + (user.processingMode || 'direct'), {
       language: translations[lang]?.name || lang
     }));
     return;
@@ -109,10 +108,9 @@ async function handleToneCommand(chatId) {
   const user = getUser(chatId);
   const lang = user.language || 'en';
   
-  if (user.processingMode !== 'enhanced') {
-    await sendMessage(chatId, t(lang, 'current_settings_direct', {
-      language: translations[lang]?.name || lang
-    }));
+  // Tone is only for email output type
+  if (user.processingMode !== 'enhanced' || user.outputType !== 'email') {
+    await sendMessage(chatId, "ℹ️ Tone selection is only available for Email output type.\n\nUse /output to select Email first.");
     return;
   }
   
@@ -124,24 +122,24 @@ async function handleSettingsCommand(chatId) {
   const lang = user.language || 'en';
   const prefs = getUserPreferences(chatId);
   
-  if (prefs.processingMode === 'direct' || prefs.processingMode === 'light') {
-    const modeName = t(lang, `processing_modes.${prefs.processingMode}`);
-    await sendMessage(chatId, t(lang, 'current_settings_direct', {
-      language: translations[prefs.language]?.name || prefs.language,
+  const langName = translations[prefs.language]?.name || prefs.language;
+  const modeName = t(lang, `processing_modes.${prefs.processingMode}`);
+  
+  if (prefs.processingMode === 'direct' || prefs.processingMode === 'light' || prefs.processingMode === 'ai_chat') {
+    const settingsKey = 'current_settings_' + prefs.processingMode;
+    await sendMessage(chatId, t(lang, settingsKey, {
+      language: langName,
       mode: modeName
     }));
   } else {
-    const langName = translations[prefs.language]?.name || prefs.language;
-    const modeName = t(lang, `processing_modes.${prefs.processingMode}`);
     const outputName = t(lang, `output_types.${prefs.outputType}`);
-    const toneName = t(lang, `tones.${prefs.tone}`);
-    
-    await sendMessage(chatId, t(lang, 'current_settings', {
+    let msg = t(lang, 'current_settings', {
       language: langName,
       mode: modeName,
       output: outputName,
-      tone: toneName
-    }));
+      tone: prefs.outputType === 'email' ? t(lang, `tones.${prefs.tone}`) : 'N/A'
+    });
+    await sendMessage(chatId, msg);
   }
 }
 
@@ -248,10 +246,10 @@ async function handleCallback(callbackQuery) {
     const modeName = t(lang, `processing_modes.${mode}`);
     await answerCallback(callbackId, t(lang, 'processing_set') + modeName);
     
-    // For direct/light mode: Setup complete
-    if (mode === 'direct' || mode === 'light') {
+    // For direct/light/ai_chat mode: Setup complete
+    if (mode === 'direct' || mode === 'light' || mode === 'ai_chat') {
       completeSetup(chatId);
-      const completeKey = mode === 'direct' ? 'setup_complete_direct' : 'setup_complete_light';
+      const completeKey = 'setup_complete_' + mode;
       await editMessage(chatId, messageId, t(lang, completeKey), null);
       return;
     }
@@ -275,17 +273,26 @@ async function handleCallback(callbackQuery) {
     const outputName = t(lang, `output_types.${outputType}`);
     await answerCallback(callbackId, t(lang, 'output_set') + outputName);
     
-    // Next: Tone selection
-    await editMessage(
-      chatId,
-      messageId,
-      t(lang, 'select_tone'),
-      buildToneKeyboard(lang)
-    );
+    // Only email needs tone selection
+    if (outputType === 'email') {
+      await editMessage(
+        chatId,
+        messageId,
+        t(lang, 'select_tone'),
+        buildToneKeyboard(lang)
+      );
+      return;
+    }
+    
+    // For other output types: Setup complete
+    completeSetup(chatId);
+    await editMessage(chatId, messageId, t(lang, 'setup_complete_enhanced', {
+      output: outputName
+    }), null);
     return;
   }
   
-  // TONE SELECTION
+  // TONE SELECTION (only for email)
   if (data.startsWith('tone_')) {
     const tone = data.replace('tone_', '');
     const lang = user.language || 'en';
@@ -295,8 +302,10 @@ async function handleCallback(callbackQuery) {
     const toneName = t(lang, `tones.${tone}`);
     await answerCallback(callbackId, t(lang, 'tone_set') + toneName);
     
-    // Setup complete
-    await editMessage(chatId, messageId, t(lang, 'setup_complete_enhanced'), null);
+    const outputName = t(lang, 'output_types.email');
+    await editMessage(chatId, messageId, t(lang, 'setup_complete_enhanced', {
+      output: outputName + ' (' + toneName + ')'
+    }), null);
     return;
   }
   
