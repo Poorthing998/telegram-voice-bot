@@ -1,4 +1,4 @@
-// Voxly Translations - All messages in user's selected language ONLY
+// Voxly Translations - Updated with AI Chat mode
 
 export const translations = {
   en: {
@@ -9,42 +9,43 @@ export const translations = {
     welcome: "🎙 <b>Welcome to Voxly!</b>\n\nTurn your voice into perfectly formatted text.\n\nPlease select your language:",
     language_set: "✅ Language set to English!",
     
-    // Processing Mode Selection (NEW)
+    // Processing Mode Selection
     select_processing: "⚙️ <b>How should I process your voice?</b>\n\nChoose your preferred mode:",
     processing_modes: {
-      direct: "📝 Direct — Just transcribe, no changes",
-      light: "✨ Light — Fix grammar, remove filler words",
-      enhanced: "🚀 Enhanced — Full formatting with tone & style"
+      direct: "📝 Direct — Raw transcription, no changes",
+      light: "✨ Light — Fix grammar & filler words only",
+      enhanced: "🚀 Enhanced — Format as email, notes, etc.",
+      ai_chat: "🤖 AI Chat — Ask AI questions, get answers"
     },
     processing_set: "✅ Processing mode: ",
     
     // Output Type Selection (only for enhanced mode)
-    select_output: "📝 <b>What are you creating?</b>\n\nThis helps me format your text better:",
+    select_output: "📝 <b>What format do you want?</b>\n\nI'll format your voice into this:",
     output_types: {
-      general: "📄 General Text",
       email: "📧 Email",
       summary: "📋 Summary",
-      notes: "📝 Notes & Ideas",
+      notes: "📝 Notes",
       todo: "✅ To-Do List",
-      message: "💬 Message/Chat"
+      message: "💬 Chat Message",
+      general: "📄 General Text"
     },
-    output_set: "✅ Output type: ",
+    output_set: "✅ Output format: ",
     
-    // Tone Selection (only for enhanced mode)
-    select_tone: "🎨 <b>Choose your tone:</b>",
+    // Tone Selection (only for email)
+    select_tone: "🎨 <b>Choose email tone:</b>",
     tones: {
       professional: "👔 Professional",
       casual: "😊 Casual",
       friendly: "🤗 Friendly",
-      formal: "📜 Formal",
-      concise: "⚡ Concise"
+      formal: "📜 Formal"
     },
     tone_set: "✅ Tone: ",
     
-    // Setup Complete
-    setup_complete_direct: "🎉 <b>You're all set!</b>\n\nI'll transcribe your voice exactly as you speak — no changes.\n\n<b>Commands:</b>\n/settings — Change preferences\n/status — Check usage\n/pay — Get premium",
-    setup_complete_light: "🎉 <b>You're all set!</b>\n\nI'll transcribe and lightly clean up your voice messages.\n\n<b>Commands:</b>\n/settings — Change preferences\n/status — Check usage\n/pay — Get premium",
-    setup_complete_enhanced: "🎉 <b>You're all set!</b>\n\nI'll fully format your voice messages with your preferred style.\n\n<b>Commands:</b>\n/settings — Change preferences\n/language — Change language\n/output — Change output type\n/tone — Change tone\n/status — Check usage\n/pay — Get premium",
+    // Setup Complete messages
+    setup_complete_direct: "🎉 <b>Ready!</b>\n\nI'll give you the exact transcription — no changes at all.\n\n🎤 Send a voice message to start!",
+    setup_complete_light: "🎉 <b>Ready!</b>\n\nI'll clean up your speech — fix grammar and remove filler words, nothing more.\n\n🎤 Send a voice message to start!",
+    setup_complete_enhanced: "🎉 <b>Ready!</b>\n\nI'll format your voice as {output}.\n\n🎤 Send a voice message to start!",
+    setup_complete_ai_chat: "🎉 <b>Ready!</b>\n\nSpeak your questions and I'll answer them as your AI assistant.\n\n🎤 Send a voice message to start!",
     
     // Status
     status_vip: "👑 <b>VIP Status</b>\n\nYou have unlimited free access!",
@@ -53,508 +54,525 @@ export const translations = {
     trial_ended: "\n\n⚠️ Free trial ended. Use /pay to continue.",
     
     // Payment
-    pay_instructions: "💳 <b>Payment Instructions</b>\n\nSend exactly <b>{amount} USDT</b> (TRC20) to:\n\n<code>{wallet}</code>\n\nYou'll get: <b>{messages} messages</b>\n\n⚠️ <b>Important:</b>\n• Use TRON network (TRC20) only\n• After sending, use /verify YOUR_TRON_ADDRESS\n\nExample:\n<code>/verify TXyz123abc...</code>",
-    verify_prompt: "❌ Please provide your TRON wallet address.\n\nExample:\n<code>/verify TXyz123abc...</code>",
+    pay_instructions: "💳 <b>Get Premium</b>\n\nSend <b>{amount} USDT</b> (TRC20) to:\n\n<code>{wallet}</code>\n\nYou'll get: <b>{messages} messages</b>\n\nAfter sending:\n<code>/verify YOUR_WALLET_ADDRESS</code>",
+    verify_prompt: "❌ Please provide your TRON wallet address.\n\nExample: <code>/verify TXyz123...</code>",
     verify_checking: "🔍 Checking payment...",
-    verify_success: "✅ <b>Payment Verified!</b>\n\nAmount: {amount} USDT\nTX: <code>{tx}</code>\n\n🎉 You now have {messages} messages!",
-    verify_failed: "❌ <b>Payment not found</b>\n\nPlease make sure:\n• You sent {amount} USDT (TRC20)\n• You sent to: <code>{wallet}</code>\n• Transaction is confirmed (wait 1-2 min)\n\nTry /verify again after confirmation.",
+    verify_success: "✅ <b>Payment Verified!</b>\n\nAmount: {amount} USDT\n\n🎉 You now have {messages} messages!",
+    verify_failed: "❌ <b>Payment not found</b>\n\nMake sure:\n• You sent {amount} USDT (TRC20)\n• To: <code>{wallet}</code>\n• Wait 1-2 min for confirmation\n\nTry /verify again.",
     
     // Messages
-    no_messages: "⚠️ <b>No messages remaining</b>\n\nGet {messages} more messages for just <b>{amount} USDT</b>\n\nUse /pay to see payment instructions.",
-    messages_remaining: "\n\n⚠️ {count} message(s) remaining.",
-    processing: "🎙 Processing your voice...",
-    error: "Sorry, I couldn't process that. Please try again.",
+    no_messages: "⚠️ <b>No messages left</b>\n\nGet {messages} more for <b>{amount} USDT</b>\n\nUse /pay for instructions.",
+    messages_remaining: "\n\n⚠️ {count} message(s) left.",
+    error: "Sorry, something went wrong. Please try again.",
     
     // Settings
-    current_settings: "⚙️ <b>Your Settings</b>\n\n🌐 Language: {language}\n⚙️ Mode: {mode}\n📝 Output: {output}\n🎨 Tone: {tone}\n\nUse commands to change:\n/language /mode /output /tone",
-    current_settings_direct: "⚙️ <b>Your Settings</b>\n\n🌐 Language: {language}\n⚙️ Mode: Direct (no formatting)\n\nUse /mode to change processing mode."
+    current_settings: "⚙️ <b>Your Settings</b>\n\n🌐 Language: {language}\n⚙️ Mode: {mode}\n📝 Format: {output}\n🎨 Tone: {tone}\n\nCommands: /language /mode /output /tone",
+    current_settings_direct: "⚙️ <b>Your Settings</b>\n\n🌐 Language: {language}\n⚙️ Mode: {mode}\n\nUse /mode to change.",
+    current_settings_light: "⚙️ <b>Your Settings</b>\n\n🌐 Language: {language}\n⚙️ Mode: {mode}\n\nUse /mode to change.",
+    current_settings_ai_chat: "⚙️ <b>Your Settings</b>\n\n🌐 Language: {language}\n⚙️ Mode: AI Chat\n\nUse /mode to change."
   },
 
   fa: {
     name: "فارسی",
     flag: "🇮🇷",
     
-    welcome: "🎙 <b>به Voxly خوش آمدید!</b>\n\nصدای خود را به متن تبدیل کنید.\n\nلطفاً زبان خود را انتخاب کنید:",
-    language_set: "✅ زبان به فارسی تغییر کرد!",
+    welcome: "🎙 <b>به Voxly خوش آمدید!</b>\n\nصدای خود را به متن تبدیل کنید.\n\nزبان خود را انتخاب کنید:",
+    language_set: "✅ زبان فارسی تنظیم شد!",
     
-    select_processing: "⚙️ <b>چگونه صدای شما را پردازش کنم؟</b>\n\nحالت مورد نظر را انتخاب کنید:",
+    select_processing: "⚙️ <b>چگونه صدای شما را پردازش کنم؟</b>",
     processing_modes: {
       direct: "📝 مستقیم — فقط رونویسی، بدون تغییر",
-      light: "✨ سبک — اصلاح گرامر، حذف کلمات اضافی",
-      enhanced: "🚀 پیشرفته — قالب‌بندی کامل با لحن و سبک"
+      light: "✨ سبک — فقط اصلاح گرامر",
+      enhanced: "🚀 پیشرفته — قالب‌بندی کامل",
+      ai_chat: "🤖 چت هوش مصنوعی — سوال بپرسید"
     },
-    processing_set: "✅ حالت پردازش: ",
+    processing_set: "✅ حالت: ",
     
-    select_output: "📝 <b>چه نوع متنی می‌سازید؟</b>\n\nاین به من کمک می‌کند متن شما را بهتر قالب‌بندی کنم:",
+    select_output: "📝 <b>چه فرمتی می‌خواهید؟</b>",
     output_types: {
-      general: "📄 متن عمومی",
       email: "📧 ایمیل",
       summary: "📋 خلاصه",
-      notes: "📝 یادداشت و ایده",
+      notes: "📝 یادداشت",
       todo: "✅ لیست کارها",
-      message: "💬 پیام/چت"
+      message: "💬 پیام",
+      general: "📄 متن عمومی"
     },
-    output_set: "✅ نوع خروجی: ",
+    output_set: "✅ فرمت: ",
     
-    select_tone: "🎨 <b>لحن مورد نظر خود را انتخاب کنید:</b>",
+    select_tone: "🎨 <b>لحن ایمیل:</b>",
     tones: {
       professional: "👔 حرفه‌ای",
-      casual: "😊 معمولی",
+      casual: "😊 غیررسمی",
       friendly: "🤗 دوستانه",
-      formal: "📜 رسمی",
-      concise: "⚡ مختصر"
+      formal: "📜 رسمی"
     },
     tone_set: "✅ لحن: ",
     
-    setup_complete_direct: "🎉 <b>همه چیز آماده است!</b>\n\nصدای شما را دقیقاً همانطور که صحبت می‌کنید رونویسی می‌کنم — بدون تغییر.\n\n<b>دستورات:</b>\n/settings — تغییر تنظیمات\n/status — بررسی وضعیت\n/pay — دسترسی پریمیوم",
-    setup_complete_light: "🎉 <b>همه چیز آماده است!</b>\n\nصدای شما را رونویسی و کمی تمیز می‌کنم.\n\n<b>دستورات:</b>\n/settings — تغییر تنظیمات\n/status — بررسی وضعیت\n/pay — دسترسی پریمیوم",
-    setup_complete_enhanced: "🎉 <b>همه چیز آماده است!</b>\n\nصدای شما را با سبک دلخواهتان کاملاً قالب‌بندی می‌کنم.\n\n<b>دستورات:</b>\n/settings — تغییر تنظیمات\n/language — تغییر زبان\n/output — تغییر نوع خروجی\n/tone — تغییر لحن\n/status — بررسی وضعیت\n/pay — دسترسی پریمیوم",
+    setup_complete_direct: "🎉 <b>آماده!</b>\n\nرونویسی دقیق بدون تغییر.\n\n🎤 یک پیام صوتی بفرستید!",
+    setup_complete_light: "🎉 <b>آماده!</b>\n\nگرامر و کلمات اضافی اصلاح می‌شود.\n\n🎤 یک پیام صوتی بفرستید!",
+    setup_complete_enhanced: "🎉 <b>آماده!</b>\n\nصدای شما به {output} تبدیل می‌شود.\n\n🎤 یک پیام صوتی بفرستید!",
+    setup_complete_ai_chat: "🎉 <b>آماده!</b>\n\nسوالات خود را بپرسید.\n\n🎤 یک پیام صوتی بفرستید!",
     
-    status_vip: "👑 <b>وضعیت VIP</b>\n\nشما دسترسی نامحدود رایگان دارید!",
-    status_premium: "📊 <b>وضعیت شما</b>\n\nپلن: پریمیوم ✅\nپیام‌های باقیمانده: {remaining}\nکل استفاده شده: {used}",
-    status_trial: "📊 <b>وضعیت شما</b>\n\nپلن: دوره آزمایشی\nاستفاده شده: {used}/{total}\nباقیمانده: {remaining}",
-    trial_ended: "\n\n⚠️ دوره آزمایشی تمام شد. از /pay استفاده کنید.",
+    status_vip: "👑 <b>وضعیت VIP</b>\n\nدسترسی نامحدود!",
+    status_premium: "📊 <b>وضعیت</b>\n\nپلن: پریمیوم ✅\nپیام‌های باقیمانده: {remaining}",
+    status_trial: "📊 <b>وضعیت</b>\n\nپلن: رایگان\nاستفاده شده: {used}/{total}",
+    trial_ended: "\n\n⚠️ دوره رایگان تمام شد. از /pay استفاده کنید.",
     
-    pay_instructions: "💳 <b>راهنمای پرداخت</b>\n\nدقیقاً <b>{amount} USDT</b> (TRC20) به این آدرس بفرستید:\n\n<code>{wallet}</code>\n\nدریافت می‌کنید: <b>{messages} پیام</b>\n\n⚠️ <b>مهم:</b>\n• فقط از شبکه TRON (TRC20) استفاده کنید\n• بعد از ارسال، از /verify آدرس_کیف_پول استفاده کنید",
-    verify_prompt: "❌ لطفاً آدرس کیف پول TRON خود را وارد کنید.\n\nمثال:\n<code>/verify TXyz123abc...</code>",
-    verify_checking: "🔍 در حال بررسی پرداخت...",
-    verify_success: "✅ <b>پرداخت تأیید شد!</b>\n\nمبلغ: {amount} USDT\nتراکنش: <code>{tx}</code>\n\n🎉 شما الان {messages} پیام دارید!",
-    verify_failed: "❌ <b>پرداخت یافت نشد</b>\n\nلطفاً مطمئن شوید:\n• {amount} USDT (TRC20) فرستاده‌اید\n• به آدرس صحیح فرستاده‌اید\n• تراکنش تأیید شده (۱-۲ دقیقه صبر کنید)\n\nدوباره /verify را امتحان کنید.",
+    pay_instructions: "💳 <b>پریمیوم</b>\n\n<b>{amount} USDT</b> به این آدرس بفرستید:\n\n<code>{wallet}</code>\n\nبعد از ارسال:\n<code>/verify آدرس_کیف_پول</code>",
+    verify_prompt: "❌ آدرس کیف پول TRON را وارد کنید.",
+    verify_checking: "🔍 بررسی پرداخت...",
+    verify_success: "✅ <b>پرداخت تایید شد!</b>\n\n🎉 شما {messages} پیام دارید!",
+    verify_failed: "❌ <b>پرداخت پیدا نشد</b>\n\nدوباره تلاش کنید.",
     
-    no_messages: "⚠️ <b>پیامی باقی نمانده</b>\n\n{messages} پیام دیگر فقط با <b>{amount} USDT</b>\n\nاز /pay استفاده کنید.",
-    messages_remaining: "\n\n⚠️ {count} پیام باقیمانده.",
-    processing: "🎙 در حال پردازش صدای شما...",
-    error: "متأسفانه نتوانستم پردازش کنم. لطفاً دوباره امتحان کنید.",
+    no_messages: "⚠️ <b>پیامی باقی نمانده</b>\n\n/pay برای خرید",
+    messages_remaining: "\n\n⚠️ {count} پیام باقی مانده.",
+    error: "خطایی رخ داد. دوباره تلاش کنید.",
     
-    current_settings: "⚙️ <b>تنظیمات شما</b>\n\n🌐 زبان: {language}\n⚙️ حالت: {mode}\n📝 خروجی: {output}\n🎨 لحن: {tone}\n\nبرای تغییر:\n/language /mode /output /tone",
-    current_settings_direct: "⚙️ <b>تنظیمات شما</b>\n\n🌐 زبان: {language}\n⚙️ حالت: مستقیم (بدون قالب‌بندی)\n\nاز /mode برای تغییر حالت استفاده کنید."
-  },
-
-  es: {
-    name: "Español",
-    flag: "🇪🇸",
-    
-    welcome: "🎙 <b>¡Bienvenido a Voxly!</b>\n\nConvierte tu voz en texto perfectamente formateado.\n\nPor favor, selecciona tu idioma:",
-    language_set: "✅ ¡Idioma configurado a Español!",
-    
-    select_processing: "⚙️ <b>¿Cómo debo procesar tu voz?</b>\n\nElige tu modo preferido:",
-    processing_modes: {
-      direct: "📝 Directo — Solo transcribir, sin cambios",
-      light: "✨ Ligero — Corregir gramática, eliminar muletillas",
-      enhanced: "🚀 Mejorado — Formato completo con tono y estilo"
-    },
-    processing_set: "✅ Modo de procesamiento: ",
-    
-    select_output: "📝 <b>¿Qué estás creando?</b>",
-    output_types: {
-      general: "📄 Texto General",
-      email: "📧 Correo",
-      summary: "📋 Resumen",
-      notes: "📝 Notas e Ideas",
-      todo: "✅ Lista de Tareas",
-      message: "💬 Mensaje/Chat"
-    },
-    output_set: "✅ Tipo de salida: ",
-    
-    select_tone: "🎨 <b>Elige tu tono:</b>",
-    tones: {
-      professional: "👔 Profesional",
-      casual: "😊 Casual",
-      friendly: "🤗 Amigable",
-      formal: "📜 Formal",
-      concise: "⚡ Conciso"
-    },
-    tone_set: "✅ Tono: ",
-    
-    setup_complete_direct: "🎉 <b>¡Todo listo!</b>\n\nTranscribiré tu voz exactamente como hablas — sin cambios.\n\n<b>Comandos:</b>\n/settings — Cambiar preferencias\n/status — Ver uso\n/pay — Obtener premium",
-    setup_complete_light: "🎉 <b>¡Todo listo!</b>\n\nTranscribiré y limpiaré ligeramente tus mensajes de voz.\n\n<b>Comandos:</b>\n/settings — Cambiar preferencias\n/status — Ver uso\n/pay — Obtener premium",
-    setup_complete_enhanced: "🎉 <b>¡Todo listo!</b>\n\nFormatearé completamente tus mensajes con tu estilo preferido.\n\n<b>Comandos:</b>\n/settings — Cambiar preferencias\n/language — Cambiar idioma\n/output — Cambiar tipo\n/tone — Cambiar tono\n/status — Ver uso\n/pay — Obtener premium",
-    
-    status_vip: "👑 <b>Estado VIP</b>\n\n¡Tienes acceso ilimitado gratis!",
-    status_premium: "📊 <b>Tu Estado</b>\n\nPlan: Premium ✅\nMensajes restantes: {remaining}\nTotal usado: {used}",
-    status_trial: "📊 <b>Tu Estado</b>\n\nPlan: Prueba Gratis\nUsado: {used}/{total}\nRestante: {remaining}",
-    trial_ended: "\n\n⚠️ Prueba terminada. Usa /pay para continuar.",
-    
-    pay_instructions: "💳 <b>Instrucciones de Pago</b>\n\nEnvía exactamente <b>{amount} USDT</b> (TRC20) a:\n\n<code>{wallet}</code>\n\nObtendrás: <b>{messages} mensajes</b>",
-    verify_prompt: "❌ Por favor proporciona tu dirección de wallet TRON.",
-    verify_checking: "🔍 Verificando pago...",
-    verify_success: "✅ <b>¡Pago Verificado!</b>\n\nMonto: {amount} USDT\nTX: <code>{tx}</code>\n\n🎉 ¡Ahora tienes {messages} mensajes!",
-    verify_failed: "❌ <b>Pago no encontrado</b>\n\nPor favor verifica y espera unos minutos.",
-    
-    no_messages: "⚠️ <b>Sin mensajes restantes</b>\n\nObtén {messages} mensajes por solo <b>{amount} USDT</b>",
-    messages_remaining: "\n\n⚠️ {count} mensaje(s) restante(s).",
-    processing: "🎙 Procesando tu voz...",
-    error: "Lo siento, no pude procesar eso. Por favor intenta de nuevo.",
-    
-    current_settings: "⚙️ <b>Tu Configuración</b>\n\n🌐 Idioma: {language}\n⚙️ Modo: {mode}\n📝 Salida: {output}\n🎨 Tono: {tone}",
-    current_settings_direct: "⚙️ <b>Tu Configuración</b>\n\n🌐 Idioma: {language}\n⚙️ Modo: Directo (sin formato)\n\nUsa /mode para cambiar."
+    current_settings: "⚙️ <b>تنظیمات</b>\n\n🌐 زبان: {language}\n⚙️ حالت: {mode}\n📝 فرمت: {output}",
+    current_settings_direct: "⚙️ <b>تنظیمات</b>\n\n🌐 زبان: {language}\n⚙️ حالت: مستقیم",
+    current_settings_light: "⚙️ <b>تنظیمات</b>\n\n🌐 زبان: {language}\n⚙️ حالت: سبک",
+    current_settings_ai_chat: "⚙️ <b>تنظیمات</b>\n\n🌐 زبان: {language}\n⚙️ حالت: چت هوش مصنوعی"
   },
 
   de: {
     name: "Deutsch",
     flag: "🇩🇪",
     
-    welcome: "🎙 <b>Willkommen bei Voxly!</b>\n\nVerwandle deine Stimme in perfekt formatierten Text.\n\nBitte wähle deine Sprache:",
+    welcome: "🎙 <b>Willkommen bei Voxly!</b>\n\nVerwandeln Sie Ihre Stimme in Text.\n\nBitte wählen Sie Ihre Sprache:",
     language_set: "✅ Sprache auf Deutsch gesetzt!",
     
-    select_processing: "⚙️ <b>Wie soll ich deine Stimme verarbeiten?</b>",
+    select_processing: "⚙️ <b>Wie soll ich Ihre Stimme verarbeiten?</b>",
     processing_modes: {
-      direct: "📝 Direkt — Nur transkribieren, keine Änderungen",
-      light: "✨ Leicht — Grammatik korrigieren, Füllwörter entfernen",
-      enhanced: "🚀 Erweitert — Vollständige Formatierung mit Ton und Stil"
+      direct: "📝 Direkt — Nur Transkription",
+      light: "✨ Leicht — Grammatik korrigieren",
+      enhanced: "🚀 Erweitert — Vollständige Formatierung",
+      ai_chat: "🤖 KI-Chat — Fragen stellen"
     },
-    processing_set: "✅ Verarbeitungsmodus: ",
+    processing_set: "✅ Modus: ",
     
-    select_output: "📝 <b>Was erstellst du?</b>",
+    select_output: "📝 <b>Welches Format möchten Sie?</b>",
     output_types: {
-      general: "📄 Allgemeiner Text",
       email: "📧 E-Mail",
       summary: "📋 Zusammenfassung",
-      notes: "📝 Notizen & Ideen",
-      todo: "✅ To-Do-Liste",
-      message: "💬 Nachricht/Chat"
+      notes: "📝 Notizen",
+      todo: "✅ Aufgabenliste",
+      message: "💬 Nachricht",
+      general: "📄 Allgemeiner Text"
     },
-    output_set: "✅ Ausgabetyp: ",
+    output_set: "✅ Format: ",
     
-    select_tone: "🎨 <b>Wähle deinen Ton:</b>",
+    select_tone: "🎨 <b>E-Mail-Ton wählen:</b>",
     tones: {
       professional: "👔 Professionell",
       casual: "😊 Locker",
       friendly: "🤗 Freundlich",
-      formal: "📜 Formell",
-      concise: "⚡ Prägnant"
+      formal: "📜 Formell"
     },
     tone_set: "✅ Ton: ",
     
-    setup_complete_direct: "🎉 <b>Alles bereit!</b>\n\nIch transkribiere deine Stimme genau so, wie du sprichst — ohne Änderungen.",
-    setup_complete_light: "🎉 <b>Alles bereit!</b>\n\nIch transkribiere und bereinige deine Sprachnachrichten leicht.",
-    setup_complete_enhanced: "🎉 <b>Alles bereit!</b>\n\nIch formatiere deine Sprachnachrichten vollständig mit deinem bevorzugten Stil.",
+    setup_complete_direct: "🎉 <b>Bereit!</b>\n\nExakte Transkription ohne Änderungen.\n\n🎤 Senden Sie eine Sprachnachricht!",
+    setup_complete_light: "🎉 <b>Bereit!</b>\n\nGrammatik und Füllwörter werden korrigiert.\n\n🎤 Senden Sie eine Sprachnachricht!",
+    setup_complete_enhanced: "🎉 <b>Bereit!</b>\n\nIhre Stimme wird als {output} formatiert.\n\n🎤 Senden Sie eine Sprachnachricht!",
+    setup_complete_ai_chat: "🎉 <b>Bereit!</b>\n\nStellen Sie Ihre Fragen.\n\n🎤 Senden Sie eine Sprachnachricht!",
     
-    status_vip: "👑 <b>VIP-Status</b>\n\nDu hast unbegrenzten kostenlosen Zugang!",
-    status_premium: "📊 <b>Dein Status</b>\n\nPlan: Premium ✅\nVerbleibend: {remaining}\nGenutzt: {used}",
-    status_trial: "📊 <b>Dein Status</b>\n\nPlan: Kostenlose Testversion\nGenutzt: {used}/{total}",
-    trial_ended: "\n\n⚠️ Testversion beendet. Nutze /pay.",
+    status_vip: "👑 <b>VIP-Status</b>\n\nUnbegrenzter Zugang!",
+    status_premium: "📊 <b>Status</b>\n\nPlan: Premium ✅\nVerbleibend: {remaining}",
+    status_trial: "📊 <b>Status</b>\n\nPlan: Kostenlos\nGenutzt: {used}/{total}",
+    trial_ended: "\n\n⚠️ Testphase beendet. /pay für Premium.",
     
-    pay_instructions: "💳 <b>Zahlungsanweisungen</b>\n\nSende genau <b>{amount} USDT</b> (TRC20) an:\n\n<code>{wallet}</code>",
-    verify_prompt: "❌ Bitte gib deine TRON-Wallet-Adresse an.",
-    verify_checking: "🔍 Überprüfe Zahlung...",
-    verify_success: "✅ <b>Zahlung bestätigt!</b>\n\n🎉 Du hast jetzt {messages} Nachrichten!",
+    pay_instructions: "💳 <b>Premium</b>\n\nSenden Sie <b>{amount} USDT</b> an:\n\n<code>{wallet}</code>",
+    verify_prompt: "❌ Bitte geben Sie Ihre TRON-Wallet-Adresse an.",
+    verify_checking: "🔍 Zahlung wird überprüft...",
+    verify_success: "✅ <b>Zahlung bestätigt!</b>\n\n🎉 Sie haben {messages} Nachrichten!",
     verify_failed: "❌ <b>Zahlung nicht gefunden</b>",
     
-    no_messages: "⚠️ <b>Keine Nachrichten übrig</b>",
+    no_messages: "⚠️ <b>Keine Nachrichten übrig</b>\n\n/pay für mehr",
     messages_remaining: "\n\n⚠️ {count} Nachricht(en) übrig.",
-    processing: "🎙 Verarbeite deine Stimme...",
-    error: "Entschuldigung, das konnte ich nicht verarbeiten.",
+    error: "Fehler aufgetreten. Bitte erneut versuchen.",
     
-    current_settings: "⚙️ <b>Deine Einstellungen</b>\n\n🌐 Sprache: {language}\n⚙️ Modus: {mode}\n📝 Ausgabe: {output}\n🎨 Ton: {tone}",
-    current_settings_direct: "⚙️ <b>Deine Einstellungen</b>\n\n🌐 Sprache: {language}\n⚙️ Modus: Direkt"
+    current_settings: "⚙️ <b>Einstellungen</b>\n\n🌐 Sprache: {language}\n⚙️ Modus: {mode}",
+    current_settings_direct: "⚙️ <b>Einstellungen</b>\n\n🌐 Sprache: {language}\n⚙️ Modus: Direkt",
+    current_settings_light: "⚙️ <b>Einstellungen</b>\n\n🌐 Sprache: {language}\n⚙️ Modus: Leicht",
+    current_settings_ai_chat: "⚙️ <b>Einstellungen</b>\n\n🌐 Sprache: {language}\n⚙️ Modus: KI-Chat"
+  },
+
+  es: {
+    name: "Español",
+    flag: "🇪🇸",
+    
+    welcome: "🎙 <b>¡Bienvenido a Voxly!</b>\n\nConvierte tu voz en texto.\n\nSelecciona tu idioma:",
+    language_set: "✅ Idioma configurado: Español",
+    
+    select_processing: "⚙️ <b>¿Cómo proceso tu voz?</b>",
+    processing_modes: {
+      direct: "📝 Directo — Solo transcripción",
+      light: "✨ Ligero — Corregir gramática",
+      enhanced: "🚀 Avanzado — Formato completo",
+      ai_chat: "🤖 Chat IA — Hacer preguntas"
+    },
+    processing_set: "✅ Modo: ",
+    
+    select_output: "📝 <b>¿Qué formato quieres?</b>",
+    output_types: {
+      email: "📧 Correo",
+      summary: "📋 Resumen",
+      notes: "📝 Notas",
+      todo: "✅ Lista de tareas",
+      message: "💬 Mensaje",
+      general: "📄 Texto general"
+    },
+    output_set: "✅ Formato: ",
+    
+    select_tone: "🎨 <b>Tono del correo:</b>",
+    tones: {
+      professional: "👔 Profesional",
+      casual: "😊 Casual",
+      friendly: "🤗 Amigable",
+      formal: "📜 Formal"
+    },
+    tone_set: "✅ Tono: ",
+    
+    setup_complete_direct: "🎉 <b>¡Listo!</b>\n\nTranscripción exacta sin cambios.\n\n🎤 ¡Envía un mensaje de voz!",
+    setup_complete_light: "🎉 <b>¡Listo!</b>\n\nCorregiré gramática y muletillas.\n\n🎤 ¡Envía un mensaje de voz!",
+    setup_complete_enhanced: "🎉 <b>¡Listo!</b>\n\nTu voz será formateada como {output}.\n\n🎤 ¡Envía un mensaje de voz!",
+    setup_complete_ai_chat: "🎉 <b>¡Listo!</b>\n\nHaz tus preguntas.\n\n🎤 ¡Envía un mensaje de voz!",
+    
+    status_vip: "👑 <b>Estado VIP</b>\n\n¡Acceso ilimitado!",
+    status_premium: "📊 <b>Estado</b>\n\nPlan: Premium ✅\nRestantes: {remaining}",
+    status_trial: "📊 <b>Estado</b>\n\nPlan: Gratis\nUsados: {used}/{total}",
+    trial_ended: "\n\n⚠️ Prueba terminada. /pay para premium.",
+    
+    pay_instructions: "💳 <b>Premium</b>\n\nEnvía <b>{amount} USDT</b> a:\n\n<code>{wallet}</code>",
+    verify_prompt: "❌ Proporciona tu dirección de wallet TRON.",
+    verify_checking: "🔍 Verificando pago...",
+    verify_success: "✅ <b>¡Pago verificado!</b>\n\n🎉 ¡Tienes {messages} mensajes!",
+    verify_failed: "❌ <b>Pago no encontrado</b>",
+    
+    no_messages: "⚠️ <b>Sin mensajes</b>\n\n/pay para más",
+    messages_remaining: "\n\n⚠️ {count} mensaje(s) restante(s).",
+    error: "Error. Intenta de nuevo.",
+    
+    current_settings: "⚙️ <b>Configuración</b>\n\n🌐 Idioma: {language}\n⚙️ Modo: {mode}",
+    current_settings_direct: "⚙️ <b>Configuración</b>\n\n🌐 Idioma: {language}\n⚙️ Modo: Directo",
+    current_settings_light: "⚙️ <b>Configuración</b>\n\n🌐 Idioma: {language}\n⚙️ Modo: Ligero",
+    current_settings_ai_chat: "⚙️ <b>Configuración</b>\n\n🌐 Idioma: {language}\n⚙️ Modo: Chat IA"
   },
 
   fr: {
     name: "Français",
     flag: "🇫🇷",
     
-    welcome: "🎙 <b>Bienvenue sur Voxly!</b>\n\nTransformez votre voix en texte parfaitement formaté.\n\nVeuillez sélectionner votre langue:",
-    language_set: "✅ Langue définie sur Français!",
+    welcome: "🎙 <b>Bienvenue sur Voxly!</b>\n\nTransformez votre voix en texte.\n\nChoisissez votre langue:",
+    language_set: "✅ Langue: Français",
     
-    select_processing: "⚙️ <b>Comment dois-je traiter votre voix?</b>",
+    select_processing: "⚙️ <b>Comment traiter votre voix?</b>",
     processing_modes: {
-      direct: "📝 Direct — Transcrire uniquement, sans modifications",
-      light: "✨ Léger — Corriger la grammaire, supprimer les mots de remplissage",
-      enhanced: "🚀 Amélioré — Formatage complet avec ton et style"
+      direct: "📝 Direct — Transcription seule",
+      light: "✨ Léger — Corriger grammaire",
+      enhanced: "🚀 Avancé — Formatage complet",
+      ai_chat: "🤖 Chat IA — Poser des questions"
     },
-    processing_set: "✅ Mode de traitement: ",
+    processing_set: "✅ Mode: ",
     
-    select_output: "📝 <b>Que créez-vous?</b>",
+    select_output: "📝 <b>Quel format voulez-vous?</b>",
     output_types: {
-      general: "📄 Texte Général",
-      email: "📧 Email",
+      email: "📧 E-mail",
       summary: "📋 Résumé",
-      notes: "📝 Notes & Idées",
-      todo: "✅ Liste de Tâches",
-      message: "💬 Message/Chat"
+      notes: "📝 Notes",
+      todo: "✅ Liste de tâches",
+      message: "💬 Message",
+      general: "📄 Texte général"
     },
-    output_set: "✅ Type de sortie: ",
+    output_set: "✅ Format: ",
     
-    select_tone: "🎨 <b>Choisissez votre ton:</b>",
+    select_tone: "🎨 <b>Ton de l'e-mail:</b>",
     tones: {
       professional: "👔 Professionnel",
       casual: "😊 Décontracté",
       friendly: "🤗 Amical",
-      formal: "📜 Formel",
-      concise: "⚡ Concis"
+      formal: "📜 Formel"
     },
     tone_set: "✅ Ton: ",
     
-    setup_complete_direct: "🎉 <b>Tout est prêt!</b>\n\nJe transcrirai votre voix exactement comme vous parlez — sans modifications.",
-    setup_complete_light: "🎉 <b>Tout est prêt!</b>\n\nJe transcrirai et nettoierai légèrement vos messages vocaux.",
-    setup_complete_enhanced: "🎉 <b>Tout est prêt!</b>\n\nJe formaterai entièrement vos messages avec votre style préféré.",
+    setup_complete_direct: "🎉 <b>Prêt!</b>\n\nTranscription exacte.\n\n🎤 Envoyez un message vocal!",
+    setup_complete_light: "🎉 <b>Prêt!</b>\n\nGrammaire corrigée.\n\n🎤 Envoyez un message vocal!",
+    setup_complete_enhanced: "🎉 <b>Prêt!</b>\n\nVotre voix sera formatée en {output}.\n\n🎤 Envoyez un message vocal!",
+    setup_complete_ai_chat: "🎉 <b>Prêt!</b>\n\nPosez vos questions.\n\n🎤 Envoyez un message vocal!",
     
-    status_vip: "👑 <b>Statut VIP</b>\n\nVous avez un accès illimité gratuit!",
-    status_premium: "📊 <b>Votre Statut</b>\n\nPlan: Premium ✅\nRestant: {remaining}\nUtilisé: {used}",
-    status_trial: "📊 <b>Votre Statut</b>\n\nPlan: Essai Gratuit\nUtilisé: {used}/{total}",
-    trial_ended: "\n\n⚠️ Essai terminé. Utilisez /pay.",
+    status_vip: "👑 <b>Statut VIP</b>\n\nAccès illimité!",
+    status_premium: "📊 <b>Statut</b>\n\nPlan: Premium ✅\nRestants: {remaining}",
+    status_trial: "📊 <b>Statut</b>\n\nPlan: Gratuit\nUtilisés: {used}/{total}",
+    trial_ended: "\n\n⚠️ Essai terminé. /pay pour premium.",
     
-    pay_instructions: "💳 <b>Instructions de Paiement</b>\n\nEnvoyez <b>{amount} USDT</b> (TRC20) à:\n\n<code>{wallet}</code>",
-    verify_prompt: "❌ Veuillez fournir votre adresse de portefeuille TRON.",
-    verify_checking: "🔍 Vérification du paiement...",
-    verify_success: "✅ <b>Paiement Vérifié!</b>",
+    pay_instructions: "💳 <b>Premium</b>\n\nEnvoyez <b>{amount} USDT</b> à:\n\n<code>{wallet}</code>",
+    verify_prompt: "❌ Fournissez votre adresse TRON.",
+    verify_checking: "🔍 Vérification...",
+    verify_success: "✅ <b>Paiement vérifié!</b>\n\n🎉 Vous avez {messages} messages!",
     verify_failed: "❌ <b>Paiement non trouvé</b>",
     
-    no_messages: "⚠️ <b>Plus de messages</b>",
+    no_messages: "⚠️ <b>Plus de messages</b>\n\n/pay pour plus",
     messages_remaining: "\n\n⚠️ {count} message(s) restant(s).",
-    processing: "🎙 Traitement de votre voix...",
-    error: "Désolé, je n'ai pas pu traiter cela.",
+    error: "Erreur. Réessayez.",
     
-    current_settings: "⚙️ <b>Vos Paramètres</b>\n\n🌐 Langue: {language}\n⚙️ Mode: {mode}\n📝 Sortie: {output}\n🎨 Ton: {tone}",
-    current_settings_direct: "⚙️ <b>Vos Paramètres</b>\n\n🌐 Langue: {language}\n⚙️ Mode: Direct"
+    current_settings: "⚙️ <b>Paramètres</b>\n\n🌐 Langue: {language}\n⚙️ Mode: {mode}",
+    current_settings_direct: "⚙️ <b>Paramètres</b>\n\n🌐 Langue: {language}\n⚙️ Mode: Direct",
+    current_settings_light: "⚙️ <b>Paramètres</b>\n\n🌐 Langue: {language}\n⚙️ Mode: Léger",
+    current_settings_ai_chat: "⚙️ <b>Paramètres</b>\n\n🌐 Langue: {language}\n⚙️ Mode: Chat IA"
   },
 
   ar: {
     name: "العربية",
     flag: "🇸🇦",
     
-    welcome: "🎙 <b>مرحباً بك في Voxly!</b>\n\nحوّل صوتك إلى نص منسق بشكل مثالي.\n\nالرجاء اختيار لغتك:",
-    language_set: "✅ تم تعيين اللغة إلى العربية!",
+    welcome: "🎙 <b>مرحباً بك في Voxly!</b>\n\nحوّل صوتك إلى نص.\n\nاختر لغتك:",
+    language_set: "✅ تم تعيين اللغة: العربية",
     
     select_processing: "⚙️ <b>كيف أعالج صوتك؟</b>",
     processing_modes: {
-      direct: "📝 مباشر — نسخ فقط، بدون تغييرات",
-      light: "✨ خفيف — تصحيح القواعد، إزالة الكلمات الحشو",
-      enhanced: "🚀 محسّن — تنسيق كامل مع النبرة والأسلوب"
+      direct: "📝 مباشر — نسخ فقط",
+      light: "✨ خفيف — تصحيح القواعد",
+      enhanced: "🚀 متقدم — تنسيق كامل",
+      ai_chat: "🤖 دردشة ذكية — اطرح أسئلة"
     },
-    processing_set: "✅ وضع المعالجة: ",
+    processing_set: "✅ الوضع: ",
     
-    select_output: "📝 <b>ماذا تنشئ؟</b>",
+    select_output: "📝 <b>ما التنسيق المطلوب؟</b>",
     output_types: {
-      general: "📄 نص عام",
       email: "📧 بريد إلكتروني",
       summary: "📋 ملخص",
-      notes: "📝 ملاحظات وأفكار",
+      notes: "📝 ملاحظات",
       todo: "✅ قائمة مهام",
-      message: "💬 رسالة/دردشة"
+      message: "💬 رسالة",
+      general: "📄 نص عام"
     },
-    output_set: "✅ نوع المخرج: ",
+    output_set: "✅ التنسيق: ",
     
-    select_tone: "🎨 <b>اختر نبرتك:</b>",
+    select_tone: "🎨 <b>نبرة البريد:</b>",
     tones: {
       professional: "👔 مهني",
       casual: "😊 عادي",
       friendly: "🤗 ودي",
-      formal: "📜 رسمي",
-      concise: "⚡ موجز"
+      formal: "📜 رسمي"
     },
     tone_set: "✅ النبرة: ",
     
-    setup_complete_direct: "🎉 <b>كل شيء جاهز!</b>\n\nسأنسخ صوتك بالضبط كما تتحدث — بدون تغييرات.",
-    setup_complete_light: "🎉 <b>كل شيء جاهز!</b>\n\nسأنسخ وأنظف رسائلك الصوتية قليلاً.",
-    setup_complete_enhanced: "🎉 <b>كل شيء جاهز!</b>\n\nسأنسق رسائلك الصوتية بالكامل بأسلوبك المفضل.",
+    setup_complete_direct: "🎉 <b>جاهز!</b>\n\nنسخ دقيق بدون تغيير.\n\n🎤 أرسل رسالة صوتية!",
+    setup_complete_light: "🎉 <b>جاهز!</b>\n\nسيتم تصحيح القواعد.\n\n🎤 أرسل رسالة صوتية!",
+    setup_complete_enhanced: "🎉 <b>جاهز!</b>\n\nسيتم تنسيق صوتك كـ {output}.\n\n🎤 أرسل رسالة صوتية!",
+    setup_complete_ai_chat: "🎉 <b>جاهز!</b>\n\nاطرح أسئلتك.\n\n🎤 أرسل رسالة صوتية!",
     
-    status_vip: "👑 <b>حالة VIP</b>\n\nلديك وصول مجاني غير محدود!",
-    status_premium: "📊 <b>حالتك</b>\n\nالخطة: بريميوم ✅\nالمتبقي: {remaining}",
-    status_trial: "📊 <b>حالتك</b>\n\nالخطة: تجربة مجانية\nالمستخدم: {used}/{total}",
-    trial_ended: "\n\n⚠️ انتهت التجربة. استخدم /pay.",
+    status_vip: "👑 <b>حالة VIP</b>\n\nوصول غير محدود!",
+    status_premium: "📊 <b>الحالة</b>\n\nالخطة: بريميوم ✅\nالمتبقي: {remaining}",
+    status_trial: "📊 <b>الحالة</b>\n\nالخطة: مجاني\nالمستخدم: {used}/{total}",
+    trial_ended: "\n\n⚠️ انتهت الفترة المجانية. /pay للترقية.",
     
-    pay_instructions: "💳 <b>تعليمات الدفع</b>\n\nأرسل <b>{amount} USDT</b> (TRC20) إلى:\n\n<code>{wallet}</code>",
-    verify_prompt: "❌ الرجاء تقديم عنوان محفظة TRON الخاص بك.",
-    verify_checking: "🔍 جارٍ التحقق من الدفع...",
-    verify_success: "✅ <b>تم التحقق من الدفع!</b>",
+    pay_instructions: "💳 <b>بريميوم</b>\n\nأرسل <b>{amount} USDT</b> إلى:\n\n<code>{wallet}</code>",
+    verify_prompt: "❌ أدخل عنوان محفظة TRON.",
+    verify_checking: "🔍 جاري التحقق...",
+    verify_success: "✅ <b>تم التحقق!</b>\n\n🎉 لديك {messages} رسالة!",
     verify_failed: "❌ <b>لم يتم العثور على الدفع</b>",
     
-    no_messages: "⚠️ <b>لا رسائل متبقية</b>",
+    no_messages: "⚠️ <b>لا رسائل متبقية</b>\n\n/pay للمزيد",
     messages_remaining: "\n\n⚠️ {count} رسالة متبقية.",
-    processing: "🎙 جارٍ معالجة صوتك...",
-    error: "عذراً، لم أتمكن من المعالجة.",
+    error: "حدث خطأ. حاول مرة أخرى.",
     
-    current_settings: "⚙️ <b>إعداداتك</b>\n\n🌐 اللغة: {language}\n⚙️ الوضع: {mode}\n📝 المخرج: {output}\n🎨 النبرة: {tone}",
-    current_settings_direct: "⚙️ <b>إعداداتك</b>\n\n🌐 اللغة: {language}\n⚙️ الوضع: مباشر"
+    current_settings: "⚙️ <b>الإعدادات</b>\n\n🌐 اللغة: {language}\n⚙️ الوضع: {mode}",
+    current_settings_direct: "⚙️ <b>الإعدادات</b>\n\n🌐 اللغة: {language}\n⚙️ الوضع: مباشر",
+    current_settings_light: "⚙️ <b>الإعدادات</b>\n\n🌐 اللغة: {language}\n⚙️ الوضع: خفيف",
+    current_settings_ai_chat: "⚙️ <b>الإعدادات</b>\n\n🌐 اللغة: {language}\n⚙️ الوضع: دردشة ذكية"
   },
 
   tr: {
     name: "Türkçe",
     flag: "🇹🇷",
     
-    welcome: "🎙 <b>Voxly'ye Hoş Geldiniz!</b>\n\nSesinizi mükemmel biçimlendirilmiş metne dönüştürün.\n\nLütfen dilinizi seçin:",
-    language_set: "✅ Dil Türkçe olarak ayarlandı!",
+    welcome: "🎙 <b>Voxly'ye Hoş Geldiniz!</b>\n\nSesinizi metne dönüştürün.\n\nDilinizi seçin:",
+    language_set: "✅ Dil: Türkçe",
     
     select_processing: "⚙️ <b>Sesinizi nasıl işleyeyim?</b>",
     processing_modes: {
-      direct: "📝 Doğrudan — Sadece yazıya çevir, değişiklik yok",
-      light: "✨ Hafif — Dilbilgisi düzelt, dolgu kelimeleri kaldır",
-      enhanced: "🚀 Gelişmiş — Ton ve stil ile tam biçimlendirme"
+      direct: "📝 Doğrudan — Sadece transkript",
+      light: "✨ Hafif — Gramer düzeltme",
+      enhanced: "🚀 Gelişmiş — Tam biçimlendirme",
+      ai_chat: "🤖 AI Sohbet — Soru sorun"
     },
-    processing_set: "✅ İşleme modu: ",
+    processing_set: "✅ Mod: ",
     
-    select_output: "📝 <b>Ne oluşturuyorsunuz?</b>",
+    select_output: "📝 <b>Hangi format?</b>",
     output_types: {
-      general: "📄 Genel Metin",
       email: "📧 E-posta",
       summary: "📋 Özet",
-      notes: "📝 Notlar ve Fikirler",
-      todo: "✅ Yapılacaklar Listesi",
-      message: "💬 Mesaj/Sohbet"
+      notes: "📝 Notlar",
+      todo: "✅ Yapılacaklar",
+      message: "💬 Mesaj",
+      general: "📄 Genel Metin"
     },
-    output_set: "✅ Çıktı türü: ",
+    output_set: "✅ Format: ",
     
-    select_tone: "🎨 <b>Tonunuzu seçin:</b>",
+    select_tone: "🎨 <b>E-posta tonu:</b>",
     tones: {
       professional: "👔 Profesyonel",
       casual: "😊 Rahat",
-      friendly: "🤗 Arkadaşça",
-      formal: "📜 Resmi",
-      concise: "⚡ Özlü"
+      friendly: "🤗 Dostça",
+      formal: "📜 Resmi"
     },
     tone_set: "✅ Ton: ",
     
-    setup_complete_direct: "🎉 <b>Her şey hazır!</b>\n\nSesinizi tam konuştuğunuz gibi yazıya çevireceğim — değişiklik yok.",
-    setup_complete_light: "🎉 <b>Her şey hazır!</b>\n\nSesli mesajlarınızı yazıya çevirip hafifçe temizleyeceğim.",
-    setup_complete_enhanced: "🎉 <b>Her şey hazır!</b>\n\nSesli mesajlarınızı tercih ettiğiniz stille tam olarak biçimlendireceğim.",
+    setup_complete_direct: "🎉 <b>Hazır!</b>\n\nDeğişiklik olmadan tam transkript.\n\n🎤 Sesli mesaj gönderin!",
+    setup_complete_light: "🎉 <b>Hazır!</b>\n\nGramer düzeltilecek.\n\n🎤 Sesli mesaj gönderin!",
+    setup_complete_enhanced: "🎉 <b>Hazır!</b>\n\nSesiniz {output} olarak biçimlendirilecek.\n\n🎤 Sesli mesaj gönderin!",
+    setup_complete_ai_chat: "🎉 <b>Hazır!</b>\n\nSorularınızı sorun.\n\n🎤 Sesli mesaj gönderin!",
     
-    status_vip: "👑 <b>VIP Durumu</b>\n\nSınırsız ücretsiz erişiminiz var!",
-    status_premium: "📊 <b>Durumunuz</b>\n\nPlan: Premium ✅\nKalan: {remaining}",
-    status_trial: "📊 <b>Durumunuz</b>\n\nPlan: Ücretsiz Deneme\nKullanılan: {used}/{total}",
-    trial_ended: "\n\n⚠️ Deneme süresi bitti.",
+    status_vip: "👑 <b>VIP Durum</b>\n\nSınırsız erişim!",
+    status_premium: "📊 <b>Durum</b>\n\nPlan: Premium ✅\nKalan: {remaining}",
+    status_trial: "📊 <b>Durum</b>\n\nPlan: Ücretsiz\nKullanılan: {used}/{total}",
+    trial_ended: "\n\n⚠️ Deneme bitti. Premium için /pay.",
     
-    pay_instructions: "💳 <b>Ödeme Talimatları</b>\n\n<b>{amount} USDT</b> (TRC20) gönderin.",
-    verify_prompt: "❌ Lütfen TRON cüzdan adresinizi girin.",
-    verify_checking: "🔍 Ödeme kontrol ediliyor...",
-    verify_success: "✅ <b>Ödeme Doğrulandı!</b>",
+    pay_instructions: "💳 <b>Premium</b>\n\n<b>{amount} USDT</b> gönderin:\n\n<code>{wallet}</code>",
+    verify_prompt: "❌ TRON cüzdan adresinizi girin.",
+    verify_checking: "🔍 Kontrol ediliyor...",
+    verify_success: "✅ <b>Ödeme doğrulandı!</b>\n\n🎉 {messages} mesajınız var!",
     verify_failed: "❌ <b>Ödeme bulunamadı</b>",
     
-    no_messages: "⚠️ <b>Mesaj kalmadı</b>",
+    no_messages: "⚠️ <b>Mesaj kalmadı</b>\n\nDaha fazlası için /pay",
     messages_remaining: "\n\n⚠️ {count} mesaj kaldı.",
-    processing: "🎙 Sesiniz işleniyor...",
-    error: "Üzgünüm, işleyemedim.",
+    error: "Hata. Tekrar deneyin.",
     
-    current_settings: "⚙️ <b>Ayarlarınız</b>\n\n🌐 Dil: {language}\n⚙️ Mod: {mode}\n📝 Çıktı: {output}\n🎨 Ton: {tone}",
-    current_settings_direct: "⚙️ <b>Ayarlarınız</b>\n\n🌐 Dil: {language}\n⚙️ Mod: Doğrudan"
+    current_settings: "⚙️ <b>Ayarlar</b>\n\n🌐 Dil: {language}\n⚙️ Mod: {mode}",
+    current_settings_direct: "⚙️ <b>Ayarlar</b>\n\n🌐 Dil: {language}\n⚙️ Mod: Doğrudan",
+    current_settings_light: "⚙️ <b>Ayarlar</b>\n\n🌐 Dil: {language}\n⚙️ Mod: Hafif",
+    current_settings_ai_chat: "⚙️ <b>Ayarlar</b>\n\n🌐 Dil: {language}\n⚙️ Mod: AI Sohbet"
   },
 
   ru: {
     name: "Русский",
     flag: "🇷🇺",
     
-    welcome: "🎙 <b>Добро пожаловать в Voxly!</b>\n\nПревратите голос в идеально отформатированный текст.\n\nВыберите язык:",
-    language_set: "✅ Язык установлен на Русский!",
+    welcome: "🎙 <b>Добро пожаловать в Voxly!</b>\n\nПревратите голос в текст.\n\nВыберите язык:",
+    language_set: "✅ Язык: Русский",
     
-    select_processing: "⚙️ <b>Как обрабатывать ваш голос?</b>",
+    select_processing: "⚙️ <b>Как обработать голос?</b>",
     processing_modes: {
-      direct: "📝 Прямой — Только транскрипция, без изменений",
-      light: "✨ Лёгкий — Исправить грамматику, убрать слова-паразиты",
-      enhanced: "🚀 Улучшенный — Полное форматирование с тоном и стилем"
+      direct: "📝 Прямой — Только транскрипция",
+      light: "✨ Лёгкий — Исправить грамматику",
+      enhanced: "🚀 Расширенный — Полное форматирование",
+      ai_chat: "🤖 ИИ Чат — Задать вопросы"
     },
-    processing_set: "✅ Режим обработки: ",
+    processing_set: "✅ Режим: ",
     
-    select_output: "📝 <b>Что вы создаёте?</b>",
+    select_output: "📝 <b>Какой формат?</b>",
     output_types: {
-      general: "📄 Общий текст",
       email: "📧 Email",
       summary: "📋 Резюме",
-      notes: "📝 Заметки и идеи",
+      notes: "📝 Заметки",
       todo: "✅ Список дел",
-      message: "💬 Сообщение/Чат"
+      message: "💬 Сообщение",
+      general: "📄 Общий текст"
     },
-    output_set: "✅ Тип вывода: ",
+    output_set: "✅ Формат: ",
     
-    select_tone: "🎨 <b>Выберите тон:</b>",
+    select_tone: "🎨 <b>Тон письма:</b>",
     tones: {
       professional: "👔 Профессиональный",
-      casual: "😊 Повседневный",
+      casual: "😊 Неформальный",
       friendly: "🤗 Дружелюбный",
-      formal: "📜 Формальный",
-      concise: "⚡ Краткий"
+      formal: "📜 Официальный"
     },
     tone_set: "✅ Тон: ",
     
-    setup_complete_direct: "🎉 <b>Всё готово!</b>\n\nЯ буду транскрибировать ваш голос точно так, как вы говорите — без изменений.",
-    setup_complete_light: "🎉 <b>Всё готово!</b>\n\nЯ буду транскрибировать и слегка очищать ваши голосовые сообщения.",
-    setup_complete_enhanced: "🎉 <b>Всё готово!</b>\n\nЯ буду полностью форматировать ваши сообщения в вашем предпочтительном стиле.",
+    setup_complete_direct: "🎉 <b>Готово!</b>\n\nТочная транскрипция без изменений.\n\n🎤 Отправьте голосовое сообщение!",
+    setup_complete_light: "🎉 <b>Готово!</b>\n\nГрамматика будет исправлена.\n\n🎤 Отправьте голосовое сообщение!",
+    setup_complete_enhanced: "🎉 <b>Готово!</b>\n\nВаш голос будет отформатирован как {output}.\n\n🎤 Отправьте голосовое сообщение!",
+    setup_complete_ai_chat: "🎉 <b>Готово!</b>\n\nЗадавайте вопросы.\n\n🎤 Отправьте голосовое сообщение!",
     
-    status_vip: "👑 <b>VIP Статус</b>\n\nУ вас безлимитный бесплатный доступ!",
-    status_premium: "📊 <b>Ваш статус</b>\n\nПлан: Премиум ✅\nОсталось: {remaining}",
-    status_trial: "📊 <b>Ваш статус</b>\n\nПлан: Пробный\nИспользовано: {used}/{total}",
-    trial_ended: "\n\n⚠️ Пробный период закончился.",
+    status_vip: "👑 <b>VIP Статус</b>\n\nБезлимитный доступ!",
+    status_premium: "📊 <b>Статус</b>\n\nПлан: Премиум ✅\nОсталось: {remaining}",
+    status_trial: "📊 <b>Статус</b>\n\nПлан: Бесплатный\nИспользовано: {used}/{total}",
+    trial_ended: "\n\n⚠️ Пробный период закончился. /pay для премиума.",
     
-    pay_instructions: "💳 <b>Инструкции по оплате</b>\n\nОтправьте <b>{amount} USDT</b> (TRC20).",
+    pay_instructions: "💳 <b>Премиум</b>\n\nОтправьте <b>{amount} USDT</b> на:\n\n<code>{wallet}</code>",
     verify_prompt: "❌ Укажите адрес TRON кошелька.",
-    verify_checking: "🔍 Проверка оплаты...",
-    verify_success: "✅ <b>Оплата подтверждена!</b>",
-    verify_failed: "❌ <b>Оплата не найдена</b>",
+    verify_checking: "🔍 Проверка...",
+    verify_success: "✅ <b>Платёж подтверждён!</b>\n\n🎉 У вас {messages} сообщений!",
+    verify_failed: "❌ <b>Платёж не найден</b>",
     
-    no_messages: "⚠️ <b>Сообщения закончились</b>",
+    no_messages: "⚠️ <b>Сообщения закончились</b>\n\n/pay для пополнения",
     messages_remaining: "\n\n⚠️ Осталось {count} сообщений.",
-    processing: "🎙 Обработка голоса...",
-    error: "Извините, не удалось обработать.",
+    error: "Ошибка. Попробуйте снова.",
     
-    current_settings: "⚙️ <b>Настройки</b>\n\n🌐 Язык: {language}\n⚙️ Режим: {mode}\n📝 Вывод: {output}\n🎨 Тон: {tone}",
-    current_settings_direct: "⚙️ <b>Настройки</b>\n\n🌐 Язык: {language}\n⚙️ Режим: Прямой"
+    current_settings: "⚙️ <b>Настройки</b>\n\n🌐 Язык: {language}\n⚙️ Режим: {mode}",
+    current_settings_direct: "⚙️ <b>Настройки</b>\n\n🌐 Язык: {language}\n⚙️ Режим: Прямой",
+    current_settings_light: "⚙️ <b>Настройки</b>\n\n🌐 Язык: {language}\n⚙️ Режим: Лёгкий",
+    current_settings_ai_chat: "⚙️ <b>Настройки</b>\n\n🌐 Язык: {language}\n⚙️ Режим: ИИ Чат"
   },
 
   zh: {
     name: "中文",
     flag: "🇨🇳",
     
-    welcome: "🎙 <b>欢迎使用 Voxly！</b>\n\n将您的语音转换为完美格式的文本。\n\n请选择您的语言：",
-    language_set: "✅ 语言已设置为中文！",
+    welcome: "🎙 <b>欢迎使用 Voxly!</b>\n\n将语音转换为文字。\n\n请选择语言:",
+    language_set: "✅ 语言: 中文",
     
-    select_processing: "⚙️ <b>我应该如何处理您的语音？</b>",
+    select_processing: "⚙️ <b>如何处理您的语音?</b>",
     processing_modes: {
-      direct: "📝 直接 — 仅转录，不做更改",
-      light: "✨ 轻度 — 修正语法，删除填充词",
-      enhanced: "🚀 增强 — 带有语气和风格的完整格式化"
+      direct: "📝 直接 — 仅转录",
+      light: "✨ 轻度 — 修正语法",
+      enhanced: "🚀 增强 — 完整格式化",
+      ai_chat: "🤖 AI聊天 — 提问"
     },
-    processing_set: "✅ 处理模式：",
+    processing_set: "✅ 模式: ",
     
-    select_output: "📝 <b>您在创建什么？</b>",
+    select_output: "📝 <b>选择格式:</b>",
     output_types: {
-      general: "📄 通用文本",
       email: "📧 邮件",
       summary: "📋 摘要",
-      notes: "📝 笔记和想法",
+      notes: "📝 笔记",
       todo: "✅ 待办事项",
-      message: "💬 消息/聊天"
+      message: "💬 消息",
+      general: "📄 通用文本"
     },
-    output_set: "✅ 输出类型：",
+    output_set: "✅ 格式: ",
     
-    select_tone: "🎨 <b>选择您的语气：</b>",
+    select_tone: "🎨 <b>邮件语气:</b>",
     tones: {
       professional: "👔 专业",
       casual: "😊 随意",
       friendly: "🤗 友好",
-      formal: "📜 正式",
-      concise: "⚡ 简洁"
+      formal: "📜 正式"
     },
-    tone_set: "✅ 语气：",
+    tone_set: "✅ 语气: ",
     
-    setup_complete_direct: "🎉 <b>一切就绪！</b>\n\n我会完全按照您说话的方式转录您的语音——不做任何更改。",
-    setup_complete_light: "🎉 <b>一切就绪！</b>\n\n我会转录并轻度清理您的语音消息。",
-    setup_complete_enhanced: "🎉 <b>一切就绪！</b>\n\n我会用您喜欢的风格完全格式化您的消息。",
+    setup_complete_direct: "🎉 <b>准备就绪!</b>\n\n精确转录，不做更改。\n\n🎤 发送语音消息!",
+    setup_complete_light: "🎉 <b>准备就绪!</b>\n\n将修正语法。\n\n🎤 发送语音消息!",
+    setup_complete_enhanced: "🎉 <b>准备就绪!</b>\n\n您的语音将被格式化为 {output}。\n\n🎤 发送语音消息!",
+    setup_complete_ai_chat: "🎉 <b>准备就绪!</b>\n\n提出您的问题。\n\n🎤 发送语音消息!",
     
-    status_vip: "👑 <b>VIP 状态</b>\n\n您拥有无限免费访问权限！",
-    status_premium: "📊 <b>您的状态</b>\n\n计划：高级 ✅\n剩余：{remaining}",
-    status_trial: "📊 <b>您的状态</b>\n\n计划：免费试用\n已用：{used}/{total}",
-    trial_ended: "\n\n⚠️ 试用结束。使用 /pay。",
+    status_vip: "👑 <b>VIP状态</b>\n\n无限访问!",
+    status_premium: "📊 <b>状态</b>\n\n计划: 高级 ✅\n剩余: {remaining}",
+    status_trial: "📊 <b>状态</b>\n\n计划: 免费\n已用: {used}/{total}",
+    trial_ended: "\n\n⚠️ 试用结束。/pay 升级。",
     
-    pay_instructions: "💳 <b>付款说明</b>\n\n发送 <b>{amount} USDT</b> (TRC20)。",
-    verify_prompt: "❌ 请提供您的 TRON 钱包地址。",
-    verify_checking: "🔍 正在验证付款...",
-    verify_success: "✅ <b>付款已验证！</b>",
-    verify_failed: "❌ <b>未找到付款</b>",
+    pay_instructions: "💳 <b>高级版</b>\n\n发送 <b>{amount} USDT</b> 到:\n\n<code>{wallet}</code>",
+    verify_prompt: "❌ 请提供您的TRON钱包地址。",
+    verify_checking: "🔍 验证中...",
+    verify_success: "✅ <b>支付已验证!</b>\n\n🎉 您有 {messages} 条消息!",
+    verify_failed: "❌ <b>未找到支付</b>",
     
-    no_messages: "⚠️ <b>没有剩余消息</b>",
+    no_messages: "⚠️ <b>没有剩余消息</b>\n\n/pay 获取更多",
     messages_remaining: "\n\n⚠️ 剩余 {count} 条消息。",
-    processing: "🎙 正在处理您的语音...",
-    error: "抱歉，无法处理。",
+    error: "错误。请重试。",
     
-    current_settings: "⚙️ <b>您的设置</b>\n\n🌐 语言：{language}\n⚙️ 模式：{mode}\n📝 输出：{output}\n🎨 语气：{tone}",
-    current_settings_direct: "⚙️ <b>您的设置</b>\n\n🌐 语言：{language}\n⚙️ 模式：直接"
+    current_settings: "⚙️ <b>设置</b>\n\n🌐 语言: {language}\n⚙️ 模式: {mode}",
+    current_settings_direct: "⚙️ <b>设置</b>\n\n🌐 语言: {language}\n⚙️ 模式: 直接",
+    current_settings_light: "⚙️ <b>设置</b>\n\n🌐 语言: {language}\n⚙️ 模式: 轻度",
+    current_settings_ai_chat: "⚙️ <b>设置</b>\n\n🌐 语言: {language}\n⚙️ 模式: AI聊天"
   }
 };
 
-// Helper function to get translation with variable substitution
+// Helper function to get translation
 export function t(lang, key, vars = {}) {
   const keys = key.split('.');
-  let value = translations[lang] || translations.en;
+  let value = translations[lang];
   
   for (const k of keys) {
     value = value?.[k];

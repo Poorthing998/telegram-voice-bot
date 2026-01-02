@@ -13,7 +13,7 @@ export function getUser(chatId) {
       
       // Preferences
       language: null,
-      processingMode: null,   // 'direct', 'light', or 'enhanced'
+      processingMode: null,   // 'direct', 'light', 'enhanced', or 'ai_chat'
       outputType: null,
       tone: null,
       setupComplete: false,
@@ -34,13 +34,22 @@ export function setUserPreference(chatId, key, value) {
 export function isSetupComplete(chatId) {
   const user = getUser(chatId);
   
-  // For direct/light mode, we don't need output type and tone
-  if (user.processingMode === 'direct' || user.processingMode === 'light') {
+  // For direct/light/ai_chat mode, we don't need output type and tone
+  if (user.processingMode === 'direct' || user.processingMode === 'light' || user.processingMode === 'ai_chat') {
     return user.language && user.processingMode && user.setupComplete;
   }
   
-  // For enhanced mode, we need everything
-  return user.language && user.processingMode && user.outputType && user.tone && user.setupComplete;
+  // For enhanced mode with email, we need tone
+  if (user.processingMode === 'enhanced' && user.outputType === 'email') {
+    return user.language && user.processingMode && user.outputType && user.tone && user.setupComplete;
+  }
+  
+  // For enhanced mode with other output types, no tone needed
+  if (user.processingMode === 'enhanced') {
+    return user.language && user.processingMode && user.outputType && user.setupComplete;
+  }
+  
+  return user.language && user.processingMode && user.setupComplete;
 }
 
 export function completeSetup(chatId) {
